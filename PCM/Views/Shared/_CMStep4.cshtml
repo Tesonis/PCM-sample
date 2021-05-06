@@ -1,0 +1,27 @@
+﻿@model PCM.Models.PCMViewModels.CMViewModel
+
+
+<section id="step4">
+    <a class="prevstep" href="@Url.Action("CostingModel", null, new { id = Model.Costingmodel.ModelID, step = 2}, Request.Url.Scheme)"><i class="fa fa-long-arrow-left pr-2"></i>Previous Step</a>
+    <hr />
+    <div class="row col-12">
+        <section id="section_error"></section>
+    </div>
+    <div class="form-row col-6 p-0">
+        <h5>Comments and Assumptions:</h5>
+        @Html.TextAreaFor(x => x.Costingmodel.Data.Comment, new { @id = "txt-comment", @rows = 5, @class = "form-control", @required = "required" })
+    </div>
+    <hr />
+    @Html.HiddenFor(x => x.Costingmodel.Brand, new { @id = "data-cmbrand" })
+    @Html.HiddenFor(x => x.Costingmodel.Vendor, new { @id = "data-cmvendor" })
+    @Html.HiddenFor(x => x.Costingmodel.Modelname, new { @id = "data-cmname" })
+    @Html.HiddenFor(x => x.Costingmodel.Type, new { @id = "data-cmtype" })
+    @Html.HiddenFor(x => x.Costingmodel.Zone, new { @id = "data-cmzone" })
+    @Html.HiddenFor(x => x.Costingmodel.Rejectcomment, new { @id = "data-cmrejectcomment" })
+    @*<p>Created By: <span id="step4User">@Html.LabelFor(x => x.Costingmodel.Bdm).ToString()</span></p>*@
+    <div class="row pt-4">
+            <button type="button" name="saveandexit" class="btn btn-lg btn-outline-primary ml-auto" onclick="CostingModelUpdateComment('update')">Save and Exit</button>
+            <button type="button" name="saveandsubmit" class="btn btn-lg btn-outline-success ml-3" onclick="CostingModelUpdateComment('submit')">Submit For Approval</button>
+    </div>
+</section>
+

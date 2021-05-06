@@ -1,0 +1,58 @@
+﻿@{ Layout = ""; }
+<!--
+* CoreUI - Free Bootstrap Admin Template
+* @@version v2.0.0
+* @@link https://coreui.io
+* Copyright (c) 2018 creativeLabs Łukasz Holeczek
+* Licensed under MIT (https://coreui.io/license)
+-->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - My ASP.NET Application</title>
+    @Styles.Render("~/Content/css")
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs4/dt-1.10.20/b-1.6.0/b-flash-1.6.0/b-html5-1.6.0/sl-1.3.1/datatables.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.5.6/css/buttons.bootstrap4.min.css" />
+</head>
+<body class="app header-fixed sidebar-fixed aside-menu-fixed bg-light">
+    <!--Partial view for top Navbar-->
+    @{
+        Html.RenderPartial("_Topnav");
+    }
+    <div class="app-body">
+
+        <main class="main">
+            @{
+                Html.RenderPartial("_Loader");
+            }
+            <div class="container-fluid">
+                <div class="animated fadeIn">
+                    @RenderBody()
+                </div>
+            </div>
+        </main>
+    </div>
+    @{
+        Html.RenderPartial("_Footer");
+    }
+    <!-- VIEW-SCRIPTS -->
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    @Scripts.Render("~/bundles/bs-select")
+    @Scripts.Render("~/bundles/layoutjs")
+    <script src="~/Scripts/Site/Error.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/bs4/dt-1.10.20/b-1.6.0/b-flash-1.6.0/b-html5-1.6.0/sl-1.3.1/datatables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/buttons.bootstrap4.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/buttons.flash.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/buttons.html5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/buttons.print.min.js"></script>
+    @RenderSection("Scripts", required: false)
+    <!-- /VIEW-SCRIPTS -->
+</body>
+</html>
+

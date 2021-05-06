@@ -1,0 +1,816 @@
+﻿@model PCM.Models.PCMViewModels.CMViewModel
+@using (Ajax.BeginForm("CostingAnalysis", new AjaxOptions() { HttpMethod = "Post", OnSuccess = "onSuccess", UpdateTargetId = "step2" }))
+{
+<section id="step2" class="step">
+    <a class="prevStep" href="@Url.Action("CostingModel", null, new { id = Model.Costingmodel.ModelID, step = 1 }, Request.Url.Scheme)"><i class="fa fa-long-arrow-left pr-2"></i>Previous Step</a>
+    <hr />
+    <div>
+        @*<div class="alert alert-warning alert-dismissible fade d-none">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <strong>Warning. </strong> Item Group contains more than 1 item. Data shown will reflect the <strong>averages</strong> of all items (If Applicable).
+            </div>*@
+
+        <div id="group-short" class="row col-12 p-0 m-0">
+            <h5 class="pt-2 mr-2">Name of Item Group:</h5>
+            <div class="input-group col-10">
+                <div class="input-group-prepend">
+                    @if (Model.Costingmodel.Data.Itemgroups.Count() == 0)
+                    {
+                        <button class="btn btn-outline-info dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="true" disabled>
+                            @Model.Costingmodel.Data.Itemgroups.Count() Item Groups
+                            <span class="caret"></span>
+                        </button>
+
+                    }
+                    else
+                    {
+
+                        <button class="btn btn-outline-info dropdown-toggle" type="button" id="dropdown-allgroups" data-toggle="dropdown" aria-expanded="true">
+                            @Model.Costingmodel.Data.Itemgroups.Count() Saved Item Groups
+                            <span class="caret"></span>
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="dropdown-allgroups">
+                            @foreach (var i in Model.Costingmodel.Data.Itemgroups)
+                            {
+                                <a class="dropdown-item" onclick="unsavedChangesNav(@i.id.ToString())">@i.groupname</a>
+                            }
+                        </div>
+                    }
+
+                    <div id="sel-itemgroups" class="dropdown-menu dropdown-menu-right" x-placement="top-end" style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(317px, -188px, 0px);">
+                    </div>
+                </div>
+                @Html.TextBoxFor(m => m.currItemgroup.groupname, new { @type = "text", @class = "form-control", @id = "new-itemgroup-name", @placeholder = "Name of Item Group", @required = true })
+                @if (Request.Params["gid"] == null)
+                {
+                    <div class="input-group-append">
+                        <label class="input-group-text"><span id="numitemsselected">0</span> &nbsp; Item(s) Selected</label>
+                    </div>
+                }
+                @if (Request.Params["gid"] != null)
+                {
+                    <div class="input-group-append">
+                        <label class="input-group-text"><span id="numitemsselected">@Model.currItemgroup.items.Count()</span> &nbsp; Item(s) Selected</label>
+                    </div>
+                    <div class="input-group-append">
+                        <btn class="btn btn-outline-info" data-toggle="modal" data-target="#modalWarningSave"><i class="fa fa-plus pr-2"> </i> <span>Create New Group</span></btn>
+                    </div>
+                    <div class="input-group-append">
+                        <btn class="btn btn-danger" data-toggle="modal" data-target="#modalDeleteGroup" onclick='deleteGroupWarning(@Url.RequestContext.RouteData.Values["id"],@Request.Params["gid"])'><i class="fa fa-trash pr-2"> </i> <span>Delete Item Group</span></btn>
+                    </div>
+                }
+
+
+            </div>
+
+        </div>
+        <hr />
+        <div id="pnltable">
+            <table id="table_groupitems" class="table table-bordered datatable">
+                <thead class="thead-light">
+                    <tr>
+                        <th></th>
+                        <th>ID</th>
+                        <th>Item Description</th>
+                        <th>Unit Size</th>
+                        <th>Units per Case</th>
+                        <th>Purchase Price per Case</th>
+                        <th>Wholesale Price</th>
+                        <th>Warehouse Category</th>
+                        <th>Shelf Life (Days)</th>
+                        <th hidden>DSD Price</th>
+                        <th hidden>MAC</th>
+                        <th hidden>totalsales</th>
+                        <th hidden>unitssold</th>
+                        <th>Duty Percent</th>
+                        <th>Current Retail</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Branditems != null)
+                    {
+                        var style = "";
+                        var fa = "";
+                        var href = true;
+                        foreach (var item in Model.Branditems)
+                        {
+                            if (Model.currItemgroup.items.Any(i => i.itemID == item.itemID))
+                            {
+                                style = "table-info";
+                                fa = "fa fa-plus-circle fa-minus-circle";
+                                href = true;
+                            }
+                            else if (Model.RestItemsList != null && Model.RestItemsList.Any(i => i.itemID == item.itemID))
+                            {
+                                style = "table-secondary";
+                                fa = "fa fa-plus-circle fa-check-circle-o";
+                                href = false;
+                            }
+                            else
+                            {
+                                style = "";
+                                fa = "fa fa-plus-circle";
+                                href = true;
+                            }
+                    <tr class="@style">
+                        <td>
+                            @if (href)
+                            {
+                                <a href="#?" class="group-item">
+                                    <i class="@fa"></i>
+                                    @*Hidden values for costing analysis*@
+                                    <span class="d-none">@item.itemID</span>
+                                </a>
+                            }
+                            else
+                            {
+                                <a class="group-item">
+                                    <i class="@fa"></i>
+                                    @*Hidden values for costing analysis*@
+                                    <span class="d-none">@item.itemID</span>
+                                </a>
+                            }
+
+                        </td>
+                        <td id="table-itemid">@item.itemID</td>
+                        <td id="table-itemdesc">@item.itemdescription</td>
+                        <td class="unitsize">@item.unitsize</td>
+                        <td class="unitspercase">@item.unitspercase</td>
+                        <td class="purchaseprice">@string.Format("{0:C}", item.purchaseprice)</td>
+                        <td class="wholesaleprice">@string.Format("{0:C}", item.wholesaleprice)</td>
+                        <td class="warehousecat">@item.warehousecat</td>
+                        <td class="shelflife">@item.shelflife</td>
+
+                        <td hidden class="dsdprice">@item.dsdprice</td>
+                        <td hidden class="mac">@item.movingaveragecost</td>
+                        <td hidden class="totalsales">@item.totalsales</td>
+                        <td hidden class="unitssold">@item.unitssold</td>
+                        <td class="dutypct">@item.dutypct%</td>
+                        <td class="currentretail">@string.Format("{0:C}", item.retailprice)</td>
+                    </tr>
+                        }
+                    }
+
+                </tbody>
+            </table>
+            
+            <section id="section-hiddendata">
+                @Html.HiddenFor(m => m.Costingmodel.ModelID, new { @id = "data-modelid" })
+                @Html.HiddenFor(m => m.Costingmodel.Vendor, new { @id = "data-vendorid" })
+                @if (Request.Params["gid"] != null)
+                {
+                    @Html.HiddenFor(m => m.currItemgroup.id, new { @id = "data-groupid", Value = Request.Params["gid"].ToString() })
+                }
+                else
+                {
+                    @Html.HiddenFor(m => m.currItemgroup.id, new { @id = "data-groupid", Value = 0 })
+                }
+                @Html.HiddenFor(m => m.currItemgroup.itemlist, new { @id = "data-itemlist" })
+                @Html.HiddenFor(m => m.currItemgroup.warehousecat, new { @id = "data-warehousecat" })
+                @Html.CheckBoxFor(m => m.currItemgroup.shortshelflife, new { @id = "data-shortshelflife", @class = "d-none"})
+            </section>
+        </div>
+        @if (Request.Params["gid"] != null)
+        {
+            <button type="button" id="btnCostingAnalysis" onclick="createupdateCosting()" class="btn btn-success btn-block btn-lg">
+                Update Items
+            </button>
+        }
+        else
+        {
+            <button type="button" id="btnCostingAnalysis" onclick="createupdateCosting()" class="btn btn-success btn-block btn-lg" disabled>
+                Create Costing Analysis for Selected
+            </button>
+        }
+
+        <hr />
+        <div id="div-diffItemsWarning" class="row px-3" style="display:none;">
+            <div class="alert alert-warning col-12">
+                <b>Warning: </b><span>Item Values are mismatched. Numbers displayed are a calculated average between all selected.</span>
+            </div>
+        </div>
+        <hr />
+    </div>
+
+    <section id="tempitemgroup" class="itemgroupform px-2 text-black-50" style="overflow-x:hidden; overflow-y:scroll; max-height:85vh;">
+        <div class="row">
+            <div class="col-6 text-left">
+                <div class="d-flex"><span class="my-auto">Currency: </span>@Html.TextBoxFor(m => m.currItemgroup.Currency, new { @class = "form-control float-right col-1 border-0 bg-white pr-0 font-weight-bold", @readonly = "readonly", @id = "data-currencycode" })</div>
+                <div class="d-flex"><span class="my-auto">Units per case: </span>@Html.TextBoxFor(m => m.currItemgroup.unitspercase, new { @class = "form-control float-right col-1 border-0 bg-white pr-0 font-weight-bold", @readonly = "readonly", @id = "data-unitspercase" })</div>
+                <div class="d-flex"><span class="my-auto">Unit Size : </span>@Html.TextBoxFor(m => m.currItemgroup.unitsize, new { @class = "form-control float-right col-2 border-0 bg-white pr-0 font-weight-bold", @readonly = "readonly", @id = "data-unitsize" })</div>
+                <a href="#SalesMarginAnalysis" class="btn btn-info text-white mt-1">
+                    Scroll to Sales & Margin Impact Analysis
+                </a>
+            </div>
+        </div>
+        <hr />
+        <table class="table table-light text-right">
+            <thead class="thead-dark">
+                <tr>
+                    <th style="width:30%" class="text-left">Category</th>
+                    <th style="width:15%"></th>
+                    <th style="width:27.5%">Current Pricing</th>
+                    <th style="width:27.5%"><span class="text-danger">Proposed Pricing</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="text-left">Purchase Price / Case</td>
+                    <td></td>
+                    <td>
+                        <div class="input-group col-6 float-right pr-0">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">$</span>
+                            </div>
+                            @Html.TextBoxFor(m => m.currItemgroup.currentpurchasepricepercase, new { @type = "number", @class = "form-control float-right text-right bg-transparent border-0", @readonly = "readonly", @id = "data-currppc", @step = "0.01" })
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <div class="input-group col-6 float-right pr-0">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">$</span>
+                            </div>
+                            @Html.TextBoxFor(m => m.currItemgroup.proposedpurchasepricepercase, new { @class = "form-control text-right currencyinput", @id = "data-propppc", @onkeypress = "return currinput(event)" })
+
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">Exchange Rate</td>
+                    <td>
+                        <div class="input-group">
+                            @Html.TextBoxFor(x => x.currItemgroup.Exchangerate, new { @type = "number", @class = "form-control text-right currencyinput", @id = "data-exchangerate", @step = "0.001", @onkeypress = "return currinput(event)" })
+                            @*<input type="number" class="form-control" id="data-exchangerate" value="1.00">*@
+                            <span class="input-group-append">
+                                <button class="btn btn-light" type="button"><i class="fa fa-refresh"></i></button>
+                            </span>
+                        </div>
+                    </td>
+                    <td colspan="2"></td>
+                </tr>
+                <tr>
+                    <td class="text-left">CAD Equivalent</td>
+                    <td colspan="2"></td>
+                    <td>
+                        $<span id="data-cadequivalent">0.00</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">Duty </td>
+                    <td>
+                        <div class="input-group">
+                            @Html.TextBoxFor(m => m.currItemgroup.duty, new { @type = "number", @class = "form-control float-right text-right", @id = "data-duty", @min = "0", @step = "0.01", @onkeypress = "return currinput(event)" })
+                            <div class="input-group-append">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td></td>
+                    <td>
+                        $<span id="data-propduty">0.00</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">Estimated Freight Costing</td>
+                    <td>
+                        <div class="input-group">
+                            <input id="data-freightcostingperc" type="number" class="form-control float-right text-right d-none" onkeyup="return currinput(event)" step = "0.01"/>
+                            @Html.TextBoxFor(m => m.currItemgroup.freightcosting, new { @type = "number", @class = "form-control float-right text-right", @id = "data-freightcosting", @min = "0", @step = "0.01", @onkeypress = "return currinput(event)" })
+                            <div class="input-group-prepend ml-1">
+                                <div class="d-inline-flex">
+                                    <button type="button" id="btn-freightnum" class="btn m-0 btn-light active" onclick="freightswitch('num')">$</button>
+                                    <button type="button" id="btn-freightperc" class="btn m-0 btn-light" onclick="freightswitch('perc')">%</button>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td></td>
+                    <td>
+                        $<span id="data-propfreightcosting">0.00</span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="text-left">Landed Cost</td>
+                    <td></td>
+                    <td>
+                        <div class="input-group col-6 float-right pr-0">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">$</span>
+                            </div>
+                            @Html.TextBoxFor(m => m.currItemgroup.currlandedcost, new { @type = "number", @class = "form-control float-right text-right bg-transparent border-0", @id = "data-currlandedcost", @readonly = "readonly", @step = "0.01" })
+                        </div>
+                    </td>
+                    <td>
+                        $<span id="data-proplandedcost">0.00</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">Deal Accruals</td>
+                    <td>
+                        <div class="input-group">
+
+                            @Html.TextBoxFor(m => m.currItemgroup.dealaccruals, new { @type = "number", @class = "form-control float-right text-right", @id = "data-dealaccrual", @min = "0", @step = "0.01", @onkeypress = "return currinput(event)" })
+                            <div class="input-group-append">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        $<span id="data-currdealaccrual">0.00</span>
+                    </td>
+                    <td>
+                        $<span id="data-propdealaccrual">0.00</span>
+                    </td>
+                </tr>
+                <tr class="table-secondary text-left">
+                    <td colspan="4">Other</td>
+                </tr>
+                <tr>
+                    <td class="text-left">Cash Terms</td>
+                    <td>
+                        <div class="input-group">
+                            @Html.TextBoxFor(m => m.currItemgroup.Cashterms, new { @type = "number", @class = "form-control float-right text-right", @id = "data-cashterms", @min = "0", @step = "0.01", @onkeypress = "return currinput(event)" })
+                            <div class="input-group-append">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        $<span id="data-currcashterms">0.00</span>
+                    </td>
+                    <td>
+                        $<span id="data-propcashterms">0.00</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">Other</td>
+                    <td>
+                        <div class="input-group">
+                            @Html.TextBoxFor(m => m.currItemgroup.otherperc, new { @type = "number", @class = "form-control float-right text-right", @id = "data-other", @min = "0", @step = "0.01", @onkeypress = "return currinput(event)" })
+                            <div class="input-group-append">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        $<span id="data-currother">0.00</span>
+                    </td>
+                    <td>
+                        $<span id="data-propother">0.00</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">Spoilage/Credits</td>
+                    <td>
+                        <div class="input-group">
+                            @Html.TextBoxFor(m => m.currItemgroup.spoilagecredits, new { @type = "number", @class = "form-control float-right text-right", @id = "data-spoilage", @min = "0", @step = "0.01", @onkeypress = "return currinput(event)" })
+                            <div class="input-group-append">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        $<span id="data-currspoilage">0.00</span>
+                    </td>
+                    <td>
+                        $<span id="data-propspoilage">0.00</span>
+                    </td>
+                </tr>
+                <tr class="table-secondary text-left">
+                    <td colspan="4">Support</td>
+                </tr>
+                <tr>
+                    <td class="text-left">Brand Development Fund (ad's etc)</td>
+                    <td>
+                        <div class="input-group">
+                            @Html.TextBoxFor(m => m.currItemgroup.branddevelopmentfund, new { @type = "number", @class = "form-control float-right text-right", @id = "data-branddevelopmentfund", @min = "0", @step = "0.01", @onkeypress = "return currinput(event)" })
+                            <div class="input-group-append">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        $<span id="data-currbranddevelopmentfund">0.00</span>
+                    </td>
+                    <td>
+                        $<span id="data-propbranddevelopmentfund">0.00</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">Billback to Support Price</td>
+                    <td>
+                        <div class="input-group">
+                            @Html.TextBoxFor(m => m.currItemgroup.billback, new { @type = "number", @class = "form-control float-right text-right", @id = "data-billback", @min = "0", @step = "0.01", @onkeypress = "return currinput(event)" })
+                            <div class="input-group-append">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        $<span id="data-currbillback">0.00</span>
+                    </td>
+                    <td>
+                        $<span id="data-propbillback">0.00</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <table class="table table-light text-right">
+            <thead class="thead-light">
+                <tr>
+                    <th style="width:30%" class="text-left">Wholesale Pricing</th>
+                    <th style="width:15%"></th>
+                    <th style="width:27.5%"></th>
+                    <th style="width:27.5%"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="text-left">Price / Case</td>
+                    <td></td>
+                    <td>
+                        <div class="input-group col-6 float-right pr-0">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">$</span>
+                            </div>
+                            @Html.TextBoxFor(m => m.currItemgroup.currwholesaleppc, new { @type = "number", @class = "form-control float-right text-right bg-transparent border-0", @id = "data-currwholesaleppc", @readonly = "readonly", @step = "0.01" })
+                        </div>
+                    </td>
+                    <td>
+                        <div class="input-group col-6 float-right pr-0">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">$</span>
+                            </div>
+                            @Html.TextBoxFor(m => m.currItemgroup.propwholesaleppc, new { @type = "number", @class = "form-control text-right", @id = "data-propwholesaleppc", @min = "0", @step = "0.01", @onkeypress = "return currinput(event)" })
+                        </div>
+                    </td>
+                </tr>
+                <tr class="table-warning">
+                    <td class="text-left">Divisibility</td>
+                    <td></td>
+                    <td>
+                        $<span id="data-currwholesaledivisibility">0.0000</span>
+                    </td>
+                    <td>
+                        $<span id="data-propwholesaledivisibility">0.0000</span>
+                    </td>
+                </tr>
+                <tr class="table-warning">
+                    <td class="text-left">Recommended Price / Case</td>
+                    <td></td>
+                    <td>
+                        $<span id="data-currwholesalerecommendedppc">0.00</span>
+                    </td>
+                    <td>
+                        $<span id="data-propwholesalerecommendedppc">0.00</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">Net Invoice less Deal Accruals</td>
+                    <td></td>
+                    <td>
+                        $<span id="data-currwholesalenetinvoice">0.00</span>
+                    </td>
+                    <td>
+                        $<span id="data-propwholesalenetinvoice">0.00</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">Gross Margin $ / Case</td>
+                    <td></td>
+                    <td>
+                        $<span id="data-currwholesalegrossmarginpercase">0.00</span>
+                    </td>
+                    <td>
+                        $<span id="data-propwholesalegrossmarginpercase">0.00</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">Gross Margin %</td>
+                    <td></td>
+                    <td>
+                        <span id="data-currwholesalegrossmarginperc">0.00</span>%
+                    </td>
+                    <td>
+                        <span id="data-propwholesalegrossmarginperc">0.00</span>%
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">Suggested Retail Price</td>
+                    <td></td>
+                    <td>
+                        <div class="input-group col-6 float-right pr-0">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">$</span>
+                            </div>
+                            @Html.TextBoxFor(m => m.currItemgroup.currwholesalesuggestedppc, new { @type = "number", @class = "form-control float-right text-right bg-transparent border-0", @id = "data-currwholesalesuggestedppc", @readonly = "readonly", @step = "0.01" })
+                        </div>
+                    </td>
+                    <td>
+                        <div class="input-group col-6 float-right pr-0">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">$</span>
+                            </div>
+                            @Html.TextBoxFor(m => m.currItemgroup.propwholesalesuggestedppc, new { @type = "number", @class = "form-control text-right", @id = "data-propwholesalesuggestedppc", @min = "0", @step = "0.01", @onkeypress = "return currinput(event)" })
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">Trade Margin</td>
+                    <td></td>
+                    <td>
+                        <div class="input-group col-6 pr-0 float-right">
+                            @Html.TextBoxFor(m => m.currItemgroup.currwholesaletrademargin, new { @type = "number", @class = "form-control text-right bg-transparent border-0", @id = "data-currwholesaletrademargin", @min = "0", @step = "0.01", @readonly = "readonly" })
+                            <div class="input-group-append">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="input-group col-6 pr-0 float-right">
+                            @Html.TextBoxFor(m => m.currItemgroup.propwholesaletrademargin, new { @type = "number", @class = "form-control  text-right", @id = "data-propwholesaletrademargin", @min = "0", @step = "0.01", @onkeypress = "return currinput(event)" })
+                            <div class="input-group-append">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">Net Margin $ / Case</td>
+                    <td></td>
+                    <td>
+                        $<span id="data-currwholesalenetmarginpercase">0.00</span>
+                    </td>
+                    <td>
+                        $<span id="data-propwholesalenetmarginpercase">0.00</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">Net Margin %</td>
+                    <td></td>
+                    <td>
+                        <span id="data-currwholesalenetmarginperc">0.00</span>%
+                    </td>
+                    <td>
+                        <span id="data-propwholesalenetmarginperc">0.00</span>%
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <table class="table table-light text-right">
+            <thead class="thead-light">
+                <tr>
+                    <th style="width:30%" class="text-left">DSD Pricing</th>
+                    <th style="width:15%"></th>
+                    <th style="width:27.5%"></th>
+                    <th style="width:27.5%"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="text-left">Price / Case</td>
+                    <td></td>
+                    <td>
+                        <div class="input-group col-6 float-right pr-0">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">$</span>
+                            </div>
+                            @Html.TextBoxFor(m => m.currItemgroup.currdsdppc, new { @type = "number", @class = "form-control float-right text-right bg-transparent border-0", @id = "data-currdsdppc", @readonly = "readonly", @step = "0.01" })
+                        </div>
+                    </td>
+                    <td>
+                        <div class="input-group col-6 float-right pr-0">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">$</span>
+                            </div>
+                            @Html.TextBoxFor(m => m.currItemgroup.propdsdppc, new { @type = "number", @class = "form-control text-right", @id = "data-propdsdppc",  @min = "0", @step = "0.01" })
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">Net Invoice less Deal Accruals</td>
+                    <td></td>
+                    <td>
+                        $<span id="data-currdsdnetinvoice">0.00</span>
+                    </td>
+                    <td>
+                        $<span id="data-propdsdnetinvoice">0.00</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">Gross Margin $ / Case</td>
+                    <td></td>
+                    <td>
+                        $<span id="data-currdsdgrossmarginpercase">0.00</span>
+                    </td>
+                    <td>
+                        $<span id="data-propdsdgrossmarginpercase">0.00</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">Gross Margin %</td>
+                    <td></td>
+                    <td>
+                        <span id="data-currdsdgrossmarginperc">0.00</span>%
+                    </td>
+                    <td>
+                        <span id="data-propdsdgrossmarginperc">0.00</span>%
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">Suggested Retail Price</td>
+                    <td></td>
+                    <td>
+                        <div class="input-group col-6 float-right pr-0">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">$</span>
+                            </div>
+                            @Html.TextBoxFor(m => m.currItemgroup.currdsdsuggestedppc, new { @type = "number", @class = "form-control float-right text-right bg-transparent border-0", @id = "data-currdsdsuggestedppc", @readonly = "readonly", @step = "0.01" })
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <div class="input-group col-6 float-right pr-0">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">$</span>
+                            </div>
+                            @Html.TextBoxFor(m => m.currItemgroup.propdsdsuggestedppc, new { @type = "number", @class = "form-control float-right text-right bg-transparent border-0", @id = "data-propdsdsuggestedppc", @step = "0.01", @readonly = "readonly", @onkeypress = "return currinput(event)" })
+                        </div>
+                        
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">Trade Margin</td>
+                    <td></td>
+                    <td>
+                        <div class="input-group col-6 pr-0 float-right">
+                            @Html.TextBoxFor(m => m.currItemgroup.currdsdtrademargin, new { @type = "number", @class = "form-control text-right bg-transparent border-0", @id = "data-currdsdtrademargin", @min = "0", @step = "0.01", @readonly = "readonly" })
+                            <div class="input-group-append">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="input-group col-6 pr-0 float-right">
+                            @Html.TextBoxFor(m => m.currItemgroup.propdsdtrademargin, new { @type = "number", @class = "form-control text-right", @id = "data-propdsdtrademargin", @min = "0", @step = "0.01", @onkeypress = "return currinput(event)" })
+                            <div class="input-group-append">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">Net Margin $ / Case</td>
+                    <td></td>
+                    <td>
+                        $<span id="data-currdsdnetmarginpercase">0.00</span>
+                    </td>
+                    <td>
+                        $<span id="data-propdsdnetmarginpercase">0.00</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">Net Margin %</td>
+                    <td></td>
+                    <td>
+                        <span id="data-currdsdnetmarginperc">0.00</span>%
+                    </td>
+                    <td>
+                        <span id="data-propdsdnetmarginperc">0.00</span>%
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div id="SalesMarginAnalysis" class="card overflow-auto">
+            <div class="card-header bg-info text-white">
+                <span class="font-lg font-weight-bold ">Sales & Margin Impact Analysis</span>
+                <div class="card-header-actions">
+                    <a class="card-header-action btn-minimize" href="#" data-toggle="collapse" data-target="#collapse-SalesMargin" aria-expanded="true">
+                        <i class="fa fa-chevron-down fa-lg text-white"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="collapse show" id="collapse-SalesMargin" style="">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <table class="table text-right">
+                                <thead>
+                                    <tr class="thead-light">
+                                        <th></th>
+                                        <th>Actual (Last 12 periods)</th>
+                                        <th>Projected (Next 12 periods)</th>
+                                    </tr>
+
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="text-left">Case Volume</td>
+                                        <td>@Html.TextBoxFor(m => m.currItemgroup.l12monthcasevolume, new { @class = "form-control float-right text-right col-6 border-0 bg-white pr-0", @id = "data-currcasevolume", @readonly = "readonly", @step = "0.01", @min = "0" })</td>
+                                        <td>@Html.TextBoxFor(m => m.currItemgroup.n12monthcasevolume, new { @type = "number", @class = "form-control text-right col-6 float-right", @id = "data-propcasevolume", @min = "0", @onkeypress = "return currinput(event)" })</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left">Average Selling Price / Case</td>
+                                        <td>
+                                            $<span id="data-curraveragesellingppc">0</span>
+                                        </td>
+                                        <td>
+                                            $<span id="data-propaveragesellingppc">0</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left">Total Sales</td>
+                                        <td>
+                                            @Html.HiddenFor(m => m.currItemgroup.l12monthsalesrevenue, new { @id = "data-currrevenue" })
+
+                                            <div class="input-group col-6 float-right pr-0">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">$</span>
+                                                </div>
+                                                <input type="text" class="form-control float-right text-right bg-transparent border-0" id="data-currrevenueFormat" readonly="readonly" />
+                                            </div>
+
+                                        </td>
+                                        <td>
+                                            <div class="input-group col-6 float-right pr-0">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">$</span>
+                                                </div>
+                                                @Html.TextBoxFor(m => m.currItemgroup.n12monthsalesrevenue, new { @class = "form-control float-right text-right bg-transparent border-0", @id = "data-proprevenue", @readonly = "readonly", @step = "0.01" })
+                                            </div>
+
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left">Margin / Case</td>
+                                        <td>
+                                            $<span id="data-currmarginpercase">0</span>
+                                        </td>
+                                        <td>
+                                            $<span id="data-propmarginpercase">0</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left">Margin Total</td>
+                                        <td>
+                                            $<span id="data-currmargintotal">0</span>
+                                        </td>
+                                        <td>
+                                            $<span id="data-propmargintotal">0</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left">Margin Percentage</td>
+                                        <td>
+                                            <span id="data-currmarginperc">0</span> %
+                                        </td>
+                                        <td>
+                                            <span id="data-propmarginperc">0</span> %
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr />
+
+    </section>
+    @Html.HiddenFor(m => m.Costingmodel.Data.Affectedl12cases, new { @id = "data-affectedl12cases", @step = "1", @min = "0" })
+    @Html.HiddenFor(m => m.Costingmodel.Data.Affectedl12price, new { @id = "data-affectedl12price", @step = "0.01", @min = "0" })
+    @Html.HiddenFor(m => m.Costingmodel.Data.Unaffectedl12cases, new { @id = "data-unaffectedl12cases", @step = "1", @min = "0" })
+    @Html.HiddenFor(m => m.Costingmodel.Data.Unaffectedl12price, new { @id = "data-unaffectedl12price", @step = "0.01", @min = "0" })
+    @Html.HiddenFor(m => m.Costingmodel.Data.Affectedn12cases, new { @id = "data-affectedn12cases", @step = "1", @min = "0" })
+    @Html.HiddenFor(m => m.Costingmodel.Data.Affectedn12price, new { @id = "data-affectedn12price", @step = "0.01", @min = "0" })
+    @Html.HiddenFor(m => m.Costingmodel.Data.Unaffectedn12cases, new { @id = "data-unaffectedn12cases", @step = "1", @min = "0" })
+    @Html.HiddenFor(m => m.Costingmodel.Data.Unaffectedn12price, new { @id = "data-unaffectedn12price", @step = "0.01", @min = "0" })
+    <div id="div-progressbtn" class="row pt-4">
+        <button type="submit" id="btnNewItemGroup" class="btn btn-lg btn-outline-primary ml-auto" onclick="validateStep2()">Save Item Group</button>
+        @if (Model.Costingmodel.Data.Itemgroups.Count() == 0)
+        {
+            <button class="btn btn-lg btn-outline-success ml-3" type="button" disabled>
+                Must create 1 item group to continue
+            </button>
+
+        }
+
+        else
+        {
+            <button type="button" id="btnStep3" class="btnStep3 btn btn-lg btn-outline-success ml-3">Continue to Next Step</button>
+        }
+
+    </div>
+
+    @if (Model.Costingmodel.Data.Itemgroups.Count() != 0 && Request.Params["gid"] == null)
+    {
+    <div class="row pt-4 skipbtn">
+        <a href="@Url.Action("CostingModel", null, new { id=Model.Costingmodel.ModelID, step = 3}, Request.Url.Scheme)" class="btn btn-lg btn-outline-primary btn-block btn-lg" onclick="loaderFadein()">Skip to next step</a>
+    </div>
+    }
+
+</section>
+}

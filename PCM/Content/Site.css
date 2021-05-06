@@ -1,0 +1,199 @@
+﻿html {
+    scroll-behavior: smooth;
+}
+
+/* Section 1*/
+.tab {
+    float: left;
+    height: 300px;
+}
+
+    .tab button {
+        display: block;
+        padding: 22px 16px;
+        border: none;
+        outline: none;
+        text-align: left;
+        cursor: not-allowed;
+        transition: 0.3s;
+        font-size: 17px;
+    }
+
+/* Section 2*/
+.list-group-item{
+    cursor:pointer;
+    transition: ease 0.3s;
+}
+.new-item-group {
+    border: 2px dashed #acacac;
+    color: #acacac;
+}
+    .new-item-group:hover {
+        cursor: pointer;
+        border: 2px dashed #20a8d8;
+        color: #20a8d8;
+    }
+
+/*Section 3*/
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    margin: 0;
+}
+/*Progress Bar*/
+.container {
+    width: 600px;
+    margin: 100px auto;
+}
+
+.progressbar {
+    counter-reset: step;
+}
+
+    .progressbar li {
+        list-style-type: none;
+        width: 33%;
+        float: left;
+        font-size: 12px;
+        position: relative;
+        text-align: center;
+        text-transform: uppercase;
+        color: #7d7d7d;
+        z-index: 1;
+    }
+
+        .progressbar li:before {
+            width: 30px;
+            height: 30px;
+            content: counter(step);
+            counter-increment: step;
+            line-height: 30px;
+            border: 2px solid #7d7d7d;
+            display: block;
+            text-align: center;
+            margin: 0 auto 10px auto;
+            border-radius: 50%;
+            background-color: white;
+        }
+
+        .progressbar li:after {
+            width: 80%;
+            margin-left:10%;
+            height: 2px;
+            content: '';
+            position: absolute;
+            background-color: #7d7d7d;
+            top: 15px;
+            left: -50%;
+            
+        }
+
+        .progressbar li:first-child:after {
+            content: none;
+        }
+
+        .progressbar li.active {
+            color: green;
+        }
+
+            .progressbar li.active:before {
+                border-color: #55b776;
+            }
+
+            .progressbar li.active + li:after {
+                background-color: #55b776;
+            }
+/*File Upload drag&drop*/
+.files input {
+    outline: 2px dashed #92b0b3;
+    outline-offset: -10px;
+    -webkit-transition: outline-offset .15s ease-in-out, background-color .15s linear;
+    transition: outline-offset .15s ease-in-out, background-color .15s linear;
+    padding: 120px 0px 85px 35%;
+    text-align: center !important;
+    margin: 0;
+    width: 100% !important;
+}
+
+    .files input:focus {
+        outline: 2px dashed #92b0b3;
+        outline-offset: -10px;
+        -webkit-transition: outline-offset .15s ease-in-out, background-color .15s linear;
+        transition: outline-offset .15s ease-in-out, background-color .15s linear;
+        border: 1px solid #92b0b3;
+    }
+
+.files {
+    position: relative
+}
+
+    .files:after {
+        pointer-events: none;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        width: 50px;
+        right: 0;
+        height: 56px;
+        content: "";
+        background-image: url(https://image.flaticon.com/icons/png/128/109/109612.png);
+        display: block;
+        margin: 0 auto;
+        background-size: 100%;
+        background-repeat: no-repeat;
+    }
+
+.files:before {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    pointer-events: none;
+    width: 100%;
+    right: 0;
+    height: 50px;
+    display: block;
+    margin: 0 auto;
+    color: #2ea591;
+    font-weight: 600;
+    text-transform: capitalize;
+    text-align: center;
+}
+.buttons-excel{
+    display:none;
+}
+.table td, .table th{
+    vertical-align:middle;
+}
+
+/*File Upload*/
+.form-inline .form-control.custom-file-upload {
+    border: 1px solid #ccc;
+    padding: 6px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+.wrap-input-container {
+    display: inline-block;
+    position: relative;
+    overflow: hidden;
+    height: 32px;
+}
+
+    .wrap-input-container input {
+        position: absolute;
+        font-size: 400px;
+        opacity: 0;
+        z-index: 1;
+        top: 0;
+        left: 0;
+    }
+.btn-light:not(:disabled):not(.disabled).active{
+    background-color: #59a6d5 !important;
+    color:white !important;
+}

@@ -1,0 +1,952 @@
+﻿
+@{
+    ViewBag.Title = "Price Change Proposal";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@Styles.Render("~/Content/bs-select")
+@Styles.Render("~/Content/css")
+@Styles.Render("~/Content/Site.css")
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="@Url.Action("PCMMain", null, new { area = string.Empty, controller = "Home" }, Request.Url.Scheme)"><i class="fa fa-lg fa-home pr-2"></i><b><u>Price Change Management</u></b></a></li>
+        <li class="breadcrumb-item active" aria-current="page"><b>Price Change Proposal</b></li>
+    </ol>
+</nav>
+<div class="bg-white py-5 multi_step_form">
+    
+    <div class="mx-auto text-center py-4"><h2 class="text-muted">Price Change Proposal</h2></div>
+    <div class="row col-10 mx-auto">
+        <ul class="progressbar col-12">
+            <li class="active col-3">Create Price Change</li>
+            <li class="col-3">Select Programs</li>
+            <li class="col-3">Add Customer Components</li>
+            <li class="col-3">Review Price Proposal</li>
+        </ul>
+    </div>
+    <hr />
+
+    <div class="row container-fluid">
+
+        <div class="col-9 mx-auto">
+            <section id="step1" class="mt-3 step">
+
+                <h5 class="text-muted"><span class="text-primary">Step 1</span> - Create Price Change</h5>
+                @*<div class="row">
+                    <div class="alert alert-info">
+                        <p>Invisible fields to automate (pull only):</p>
+                        <p>Metro PVA, UGI, Exclusive (These should be brand level)</p>
+                        <p>Shelf life < 180 days. This is a boolean value, the PC will use '< 180 days = true' if exists for any item.</p>
+                    </div>
+                </div>*@
+                <div class="row pt-4">
+                    <div class="col-12">
+                        <div>
+                            <span hidden class="data-brand"> @Model.Costingmodel.Brand</span>
+                            <span>Selected Costing Model: </span>
+                            <b class="pl-2"> @Model.Costingmodel.Modelname</b>
+                            <a class="pl-3" href="@Url.Action("CostingModelReview", null, new { id = Model.Costingmodel.ModelID }, Request.Url.Scheme)" target="_blank"><u>View Details</u></a>
+                        </div>
+                        <hr />
+                        <div class="row form-group col-12">
+                            <label for="sel1">Select Item Group:</label>
+                            <div class="input-group">
+                                <select class="selectpicker form-control" id="selitemGroups" data-style="btn-white border-secondary">
+                                    @foreach (var i in Model.Costingmodel.Data.Itemgroups)
+                                    {
+                                        <option value="@i.id.ToString()"> @i.groupname</option>
+                                    }
+                                </select>
+                            </div>
+
+                        </div>
+                        <div class="row col-12 form-group">
+                            <label for="pceEffectiveDate">Effective Date:</label>
+                            <input type="date" class="form-control" id="pceEffectiveDate">
+                        </div>
+                        <div class="row col-12 form-group">
+                            <label for="pceName">Price Change Name:</label>
+                            <input type="text" class="form-control d-none" id="pceNamesplit" value="@Model.Costingmodel.Modelname">
+                            <input type="text" class="form-control" id="pceName" value="">
+                        </div>
+
+
+                        @*<hr />
+        <div class="row">
+            <h5>File Upload</h5>
+            <iframe id="fileuploader" src="http://apps.treeoflife.com/fileuploadtest" style="height:200px;width:100%;border:none;overflow:hidden;"></iframe>
+        </div>*@
+                    </div>
+                </div>
+                <hr />
+                <div class="row pt-4">
+                    <button id="btnStep2" class="btn btn-lg btn-outline-success ml-auto" onclick="Step2()">Next Step</button>
+                </div>
+            </section>
+            <section id="step2" class="mt-3 step d-none">
+                <!-- PO Details -->
+                <a href="#?" onclick="Step1()"><i class="fa fa-long-arrow-left pr-2"></i>Previous Step</a><hr />
+                <h5 class="text-muted py-3"><span class="text-primary">Step 2</span> - Select Programs</h5>
+                <div class="card shadow mb-2">
+                    <!-- Card Header - Accordion -->
+                    <div class="d-block card-header bg-dark py-3">
+                        <h6 class="m-0 font-weight-bold text-white">Programs</h6>
+                    </div>
+                    <!-- Card Content - Collapse -->
+                    <div id="detailed-poinfo">
+                        <div class="card-body">
+                            <p>Zone Selected: <b>@Model.Costingmodel.Zone</b></p>
+                            <p>Brand Pillar: <b id="data-pillar"></b></p>
+                            <hr />
+                            <table id="dataTable-program" class="table table-bordered datatable">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th width="75">
+                                            <button id="btn-programSelectAll" class="btn btn-primary mx-1">Select All</button>
+                                            <button id="btn-programDeselectAll" class="btn btn-primary mx-1">Clear All</button>
+                                        </th>
+                                        <th>Name</th>
+                                        <th width="150">Price Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+
+                        </div>
+                    </div>
+                </div>
+                <hr />
+                <div class="row pt-4">
+                    <button id="btnStep3" disabled class="btn btn-lg btn-outline-success ml-auto" onclick="Step3()">Must Select Program</button>
+                </div>
+            </section>
+            <section id="step3" class="mt-3 step d-none">
+                <a href="#?" onclick="Step2()"><i class="fa fa-long-arrow-left pr-2"></i>Previous Step</a><hr />
+                <h5 class="text-muted py-3"><span class="text-primary">Step 3</span> - Additional Customer Components</h5>
+                <div class="card shadow mb-2">
+                    <!-- Card Header - Accordion -->
+                    <div class="d-block card-header bg-dark py-3">
+                        <h6 class="m-0 font-weight-bold text-white">Required component value(s) required - based on selection</h6>
+                    </div>
+                    <!-- Card Content - Collapse -->
+                    <div id="detailed-poinfo">
+                        <div class="card-body">
+                            <div id="div-ecwalmart" class="row col-8 form-group" style="display:none">
+
+                                <label for="usr" class="col-12"><b>Walmart</b><br />Manufacturer Charge back Every day low price (MCB EDLP):</label>
+
+                                <div class="input-group mb-1 ml-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">$</span>
+                                    </div>
+                                    <input type="number" class="form-control col-12" id="data-edlp" value="0" style="max-width:150px">
+                                </div>
+                                <label for="usr" class="col-12"><b>Walmart</b><br />Every day low price margin (EDLP Margin):</label>
+                                <div class="input-group mb-1 ml-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">$</span>
+                                    </div>
+                                    <input type="number" class="form-control col-12" id="data-edlpmargin" value="0" style="max-width:150px">
+
+                                </div>
+                                
+                                <!---->
+                            </div>
+                            <div id="div-ecloblaws" class="row form-group col-6" style="display:none">
+                                <label for="usr" class="ml-3"><b>Loblaw Companies WHS</b><br />Enterprise Costing:</label>
+                                <select class="form-control ml-3" id="data-ecrate">
+                                </select>
+                            </div>
+                            <div id="div-ecsaveonfoods" class="row col-6 form-group" style="display:none">
+                                <label for="usr" class="col-12"><b>Save On Foods</b><br />Over and Above MCB:</label>
+                                <div class="input-group mb-1 ml-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">$</span>
+                                    </div>
+                                    <input type="number" class="form-control col-12" id="data-overrate" value="0" style="max-width:150px">
+                                </div>
+                                
+                                <label for="usr" class="col-12"><br />Off Invoice MCB:</label>
+                                <div class="input-group mb-1 ml-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">$</span>
+                                    </div>
+                                    <input type="number" class="form-control col-12" id="data-offinvoice" value="0" style="max-width:150px">
+                                </div>
+                                
+                            </div>
+                            <div id="div-ecmetro" class="row col-6 form-group" style="display:none">
+                                <label for="usr"><b>Department</b><br />:</label>
+                                <select class="form-control ml-3" id="data-ecdept">
+                                </select>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                <hr />
+                <div class="row pt-4">
+                    <button class="btn btn-lg btn-outline-success ml-auto" onclick="Step4()">Next Step</button>
+                </div>
+            </section>
+            <section id="step4" class="mt-3 step d-none">
+                <a href="#?" onclick="Step3()" id="btn-step4back"><i class="fa fa-long-arrow-left pr-2"></i>Previous Step</a><hr />
+                <h5 class="text-muted py-3"><span class="text-primary">Step 4</span> - Review Price Changes</h5>
+                <div id="div-listbyprogram" class="card shadow mb-2">
+                    <!-- Card Header - Accordion -->
+                    <a href="#detailed-poinfo" class="d-block card-header bg-dark py-3" data-toggle="collapse" role="button" aria-expanded="true" aria-controls="detailed-poinfo">
+                        <h6 class="m-0 font-weight-bold text-white">Price Changes</h6>
+                    </a>
+                    <!-- Card Content - Collapse -->
+                    <div class="collapse show" id="detailed-poinfo">
+                        <div class="card-body">
+                            
+                            <div class="row">
+
+                                <div class="col-6">
+                                    <span class="row col-12">Effective Date:</span>
+                                    <h5 id="s4-implementationdate" class="text-muted"></h5>
+                                    <br />
+                                    <span class="row col-12">Group Name:</span>
+                                    <h5 class="text-muted" id="s4-groupname"></h5>
+                                </div>
+                                <div class="col-6">
+                                    <span class="row col-12">Costing Model:</span>
+                                    <h5 class="text-muted" id="s4-costingmodelname">@Model.Costingmodel.Modelname</h5>
+                                    <br />
+                                    <span class="row col-12"># of Items Affected:</span>
+                                    <h5 class="text-muted"><span class="data-groupitemscount"></span><a class="pl-3" href="@Url.Action("CostingModelReview", null, new { id = Model.Costingmodel.ModelID }, Request.Url.Scheme)" target="_blank"><u>View Details</u></a></h5>
+                                </div>
+                            </div>
+                            <hr />
+                            <div class="col-12 text-center" id="div-step4loading">
+                                <b>Loading Target Prices...Please Wait...</b>
+                            </div>
+                            <table class="table table-bordered table-striped" id="table-listbyprogram" style="display:none;">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Price Type</th>
+                                        <th>Price Type Name</th>
+                                        <th>Current Actual Price</th>
+                                        <th>Proposed Target Price</th>
+                                        <th>% Change</th>
+                                        <th hidden></th>
+
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+
+                        </div>
+                    </div>
+                </div>
+                <div class="modal fade" id="modal-pricetypedetail" tabindex="-1" role="dialog" aria-labelledby="modal-pricetypedetail" aria-hidden="true">
+                    <div class="modal-dialog modal-lg" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="modalItemGroup1Label">Target Price Breakdown for: <span id="modal-pricetypedetail-name"></span> (<span id="modal-pricetypedetail-code"></span>)</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row container-fluid">
+                                    <div class="col-12">
+                                        @*<h5 class="text-muted" id="modal-pricetypedetail-formulaexp"></h5>
+                                        <h5 class="text-muted" id="modal-pricetypedetail-formulaval"></h5>*@
+                                    </div>
+                                    <div class="col-12">
+                                        <table id="modal-tablecomponents" class="table">
+                                            @*<thead class="thead-light">
+                                                <tr>
+                                                    <th>Component</th>
+                                                    <th>Entered % Value</th>
+                                                    <th>Dollar Value</th>
+                                                </tr>
+                                            </thead>*@
+                                            <tbody>
+
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    
+                                    
+                                    
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                
+                <hr />
+                <div id="PCEWorkButtons">
+                    <div class="row pt-4">
+                        <button id="btn-exportExcel" class="btn btn-lg btn-outline-success ml-auto">Export to Excel</button>
+                        <a href="#?" id="btn-submitPCE" class="btn btn-lg btn-primary ml-3" data-toggle="modal" data-target="#modalDraft">Save as Draft</a>
+                        <a href="#?" id="btn-submitPCE" class="btn btn-lg  btn-success ml-3" data-toggle="modal" data-target="#modalApprove">Submit for Approval</a>
+                    </div>
+                </div>
+                <div class="modal fade" id="modalDraft" tabindex="-1" role="dialog" aria-labelledby="modalDraft" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="modalItemGroup1Label">Confirm submission</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                Your price change entry will be processed.<br /><br />Further changes can be done through editing the record from the home page.
+                            </div>
+                            <div class="modal-footer">
+                                <a id="btn-CompleteApprove" class="btn btn-lg btn-block btn-success" href="@Url.Action("PCEMain", null, new { area = string.Empty, controller = "Home" }, Request.Url.Scheme)">Confirm</a>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal fade" id="modalApprove" tabindex="-1" role="dialog" aria-labelledby="modalApprove" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="modalItemGroup1Label">Confirm submission</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                A confirmation email will be sent to you and your team lead.
+                            </div>
+                            <div class="modal-footer">
+                                <a id="btn-CompleteApprove" class="btn btn-lg btn-block btn-success" href="@Url.Action("PCEMain", null, new { area = string.Empty, controller = "Home" }, Request.Url.Scheme)">Confirm</a>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </section>
+            <div class="modal fade" id="savePC-modal">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+
+                        <!-- Modal Header -->
+                        <div class="modal-header">
+                            <h4 class="modal-title">Save as</h4>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+
+                        <!-- Modal body -->
+                        <div class="modal-body">
+                            <input class="form-control form-control-lg active" id="new-itemgroup-name" type="text" value="Midel Tariff Increase 2%">
+                        </div>
+
+                        <!-- Modal footer -->
+                        <div class="modal-footer text-center">
+                            <a href="#?" class="btn btn-outline-dark row">Save</a>
+                            <hr />
+                            <a href="@Url.Action("PCEMain", null, new { area = string.Empty, controller = "Home" }, Request.Url.Scheme)" class="btn btn-outline-success row">Save and Exit</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script src="~/Scripts/Site/formwizard.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.datatable').DataTable({
+                dom: 'Bfrtip',
+                buttons: [
+                    'excel'
+                ]
+            });
+
+            $('[data-toggle="tooltip"]').tooltip();
+            $("#btn-programDeselectAll").hide();
+            $("#fileuploader").on('load', function () {
+                var iframeHeight = $("#fileuploader").contents().find('html').height() + 20;
+                $("#fileuploader").css('height', iframeHeight)
+            });
+
+            $("#fileuploader").contents().change(function () {
+                $("#fileuploader").css('height', $("#fileuploader").contents().find('html').height() + 20);
+            });
+            $("#div-loader").fadeOut();
+            loadPriceTypes();
+            GetGroupItemCount();
+            validatePCEStep1();
+            GetCMPillar();
+        });
+        $("#btn-programSelectAll").click(function () {
+            var table = $(this).closest("table");
+            table.DataTable().destroy();
+            $(table).find("tbody tr").addClass("table-info");
+            $(table).find(".fa-plus-circle").addClass("fa-minus-circle");
+            var tablename = table.attr('id');
+            if (tablename == "table_branditems" || tablename == "table_cdmlaunches") {
+                $(this).closest("section").find(".btn-success").attr("disabled", false);
+                $("table .group-item").closest("section").find(".btn-success").prop("innerHTML", "Launch Selected Items");
+            }
+            else {
+                var count = $(this).closest("table").find(".table-info").length;
+                $(this).closest("section").find(".groupeditcount").text(count);
+                $(this).closest("section").find(".groupedit").show();
+            }
+            table.DataTable();
+            valudatePCEStep2();
+        });
+        $("#btn-programDeselectAll").click(function () {
+            $('#dataTable-program tbody tr').removeClass('table-info')
+            $('#dataTable-program tbody tr .group-item i').removeClass("fa-minus-circle");
+            $("#btn-programDeselectAll").hide();
+            $("#btn-programSelectAll").show();
+            valudatePCEStep2();
+        });
+        //validation
+        var pricechangeval = true;
+        var effectivedateval = false;
+        $("#pceEffectiveDate").change(function () {
+            if (new Date($("#pceEffectiveDate").val()) > new Date()) {
+                effectivedateval = true;
+            }
+            else {
+                effectivedateval = false;
+
+            }
+            validatePCEStep1()
+        });
+        $("#pceName").change(function () {
+            if ($("#pceName").val() != "") {
+                pricechangeval = true;
+            }
+            else {
+                pricechangeval = false;
+            }
+            validatePCEStep1()
+        });
+        $("#pceEffectiveDate").change(function () {
+            var date = $("#pceEffectiveDate").val();
+            var name = $("#pceNamesplit").val();
+            if (name.lastIndexOf("-") == -1) {
+                var splitname = name;
+            }
+            else {
+                var splitname = name.substring(0, name.lastIndexOf("-"));
+            }
+            
+            $("#pceName").val(splitname + " - " + date.toLocaleString());
+        })
+        function validatePCEStep1() {
+            if ( pricechangeval && effectivedateval) {
+                $("#btnStep2").prop('disabled', false);
+            }
+            else { $("#btnStep2").prop('disabled', true);}
+        }
+
+        function Step1() {
+            $(".step").addClass("d-none");
+            $("#step1").removeClass("d-none");
+            $(".progressbar li").removeClass("active");
+            $(".progressbar li").eq(0).addClass("active");
+        }
+        function Step2() {
+            $(".step").addClass("d-none");
+            $("#step2").removeClass("d-none");
+            $(".progressbar li").removeClass("active");
+            $(".progressbar li").eq(0).addClass("active");
+            $(".progressbar li").eq(1).addClass("active");
+            if ($("#data-ecrate").html().trim() == "") {
+                GetLoblawsEC();
+            }
+            if ($("#data-ecdept").html().trim() == "") {
+                GetMetroEC();
+            }
+        }
+        function Step3() {
+            $(".step").addClass("d-none");
+            $("#step3").removeClass("d-none");
+            $(".progressbar li").removeClass("active");
+            $(".progressbar li").eq(0).addClass("active");
+            $(".progressbar li").eq(1).addClass("active");
+            $(".progressbar li").eq(2).addClass("active");
+            displayEC();
+        }
+        function Step4() {
+            $(".step").addClass("d-none");
+            $("#step4").removeClass("d-none");
+            $(".progressbar li").addClass("active");
+            DisplayPCInfo();
+            CalculateFormula();
+        }
+        function DisplayPCInfo() {
+            $("#s4-implementationdate").text($("#pceEffectiveDate").val());
+            $("#s4-groupname").text($("#selitemGroups").text());
+        }
+        function createstep4table(result) {
+            var parsedresult = JSON.parse(result);
+
+            var pricetypedata = $("#dataTable-program").DataTable().data();
+            var pricetypestep4data = [];
+            for (i = 0; i < pricetypedata.length; i++) {
+                var pricetype = [];
+                pricetype.push(pricetypedata[i][2].toString());
+                pricetype.push(pricetypedata[i][1].toString());
+                pricetypestep4data.push(pricetype);
+            }
+
+            
+            $("#table-listbyprogram tbody").html("");
+            var ptdata = $("#dataTable-program").DataTable().rows(".table-info").data();
+            for (i = 0; i < ptdata.length; i++) {
+                //var pricetypecode = parsedresult[i].PriceType;
+                //for (j = 0; j < pricetypestep4data.length; j++) {
+                //    if (pricetypestep4data[j][0].toString() == pricetypecode) {
+                //        var pricedesc = pricetypestep4data[j][1].toString()
+                //        break;
+                //    }
+                //}
+
+                var pricedesc = ptdata[i][1];
+                var pricecode = ptdata[i][2];
+                var rowhtml = "";
+                if (typeof (parsedresult[i]) == "undefined" || parsedresult[i].Components.length == 0) {
+                    rowhtml += "<tr>";
+                    rowhtml += "<td class='data-pricetypecode'>" + pricecode + "</td>";
+                    rowhtml += "<td>" + "<a href ='#?' class='componentdetails'>" + pricedesc + "</a>" + "</td >";
+                    rowhtml += "<td colspan='4' class='data-napricetype'>Price Type Not Applicable</td>"
+                    rowhtml += "</tr>";
+                }
+                else {
+                    var strcomponents = JSON.stringify(parsedresult[i].Components);
+                    var lastindex = parsedresult[i].Components.length - 1;
+                    var proptarget = parsedresult[i].Components[lastindex].DollarVal;
+                    rowhtml += "<tr>";
+                    rowhtml += "<td class='data-pricetypecode'>" + parsedresult[i].PriceType + "</td>";
+                    rowhtml += "<td>" + "<a href ='#?' class='componentdetails'>" + pricedesc + "</a>" + "</td >";
+                    rowhtml += "<td ><span class='data-currprice'></span></td >";
+                    rowhtml += "<td >$ <span class='data-proptarget'>" + proptarget.toFixed(2) + "</span></td>";
+                    rowhtml += "<td ><span class='data-percchange'></span> %</td>";
+                    rowhtml += "<td hidden class='data-componentjson'>" + strcomponents + "</td>";
+                    rowhtml += "</tr>";
+                }
+                $("#table-listbyprogram tbody").append(rowhtml);
+            }
+            $("#div-step4loading").hide();
+            $("#table-listbyprogram").show();
+            $(".componentdetails").click(function () {
+                pricetypedetail($(this));
+            })
+            
+            
+        }
+        
+        function pricetypedetail(obj) {
+            var components = JSON.parse(obj.closest("tr").find(".data-componentjson").text());
+            var prop = JSON.parse(obj.closest("tr").find(".data-proptarget").text());
+            $("#modal-pricetypedetail-name").text(obj.closest("tr").find(".componentdetails").text());
+            $("#modal-pricetypedetail-code").text(obj.closest("tr").find(".data-pricetypecode").text());
+
+            $("#modal-tablecomponents tbody").html("");
+            $("#modal-tablecomponents tbody").append("<tr class='font-weight-bold'><td class='text-left'><span>" + components[0].ComponentText + "</span></td><td></td><td class='text-right'>$" + components[0].DollarVal.toFixed(2) + "</td><td></td></tr>");
+            for (i = 1; i < components.length; i++) {
+                //No Sortclass = Total
+                if (components[i].SortClass == "") {
+                    $("#modal-tablecomponents tbody").append("<tr class='table-warning font-weight-bold'><td class='text-left'><span>" + components[i].ComponentText + "</span></td><td></td><td></td><td class='text-right'>$" + components[i].DollarVal.toFixed(2) + "</td></tr>");
+                }
+                //No PercVal = Subtotal
+                else if (components[i].PercVal == -1) {
+                    $("#modal-tablecomponents tbody").append("<tr class='font-weight-bold table-secondary'><td class='text-left'><span>" + components[i].ComponentText + "</span></td><td></td><td></td><td class='text-right'>$" + components[i].DollarVal.toFixed(2) + "</td></tr>");
+                }
+                //Add Percentage in Column or use dollar value. Add UOM and/or ratio
+                else if (components[i].PercIden == true) {
+                    $("#modal-tablecomponents tbody").append("<tr><td class='text-left'><span>" + components[i].ComponentText + "</span></td><td class='text-right'>" + components[i].PercVal.toString() + "% </td><td class='text-right'>$" + components[i].DollarVal.toFixed(2) + "</td><td></td></tr>");
+                }
+                else {
+                    //Check for +/- Relation
+                    if (components[i].Relation == "-") {
+                        var compval = "$(" + components[i].PercVal.toString() + ")";
+                        var amount = "$(" + components[i].DollarVal.toFixed(2) + ")";
+                    }
+                    else if (components[i].Relation == "%") {
+                        var compval = components[i].PercVal.toString() + "%";
+                        var amount = "$" + components[i].DollarVal.toFixed(2);
+                    }
+                    else if (components[i].Relation == "0") {
+                        var compval = "$" + components[i].PercVal.toString();
+                        var amount = "<a href='#?' data-toggle='tooltip' data-placement='right' title='Deduction' disabled class='text-warning'><b>*</b></a>($" + components[i].DollarVal.toFixed(2)+")";
+                    }
+                    else {
+                        var compval = "$" +components[i].PercVal.toString();
+                        var amount = "$" +components[i].DollarVal.toFixed(2);
+                    }
+                    //Add Unit of Measure
+                    if (components[i].Unit != "") {
+                        var compstr = compval + "/" + components[i].Unit.toString();
+                    }
+                    else {
+                        var compstr = compval;
+                    }
+                    //Check for Non default Ratio
+                    if (components[i].Ratio != -1 && components[i].Ratio != 100) {
+                        var percval = "<td>" + compstr + " at " + components[i].Ratio.toString() + "%" + "</td>";
+                    }
+                    else {
+                        var percval = "<td>" + compstr + "</td>";
+                    }
+                    $("#modal-tablecomponents tbody").append("<tr><td class='text-left'><span>" + components[i].ComponentText + "</span></td>" + percval + "<td class='text-right'>" + amount + "</td><td></td></tr>");
+
+                }
+                
+                
+            }
+            $("#model-tableproptgt").text(prop.toString());
+            $("#modal-pricetypedetail").modal().fadeIn();
+        }
+        function displayEC() {
+            var pricetypes = new Array();
+            var ptdata = $("#dataTable-program").DataTable().rows(".table-info").data();
+            for (i = 0; i < ptdata.length; i++) {
+                pricetypes.push(ptdata[i][2]);
+            }
+            //Walmart
+            if (pricetypes.indexOf("6") != -1) {
+                //display walmart
+                $("#div-ecwalmart").show();
+            }
+            else {
+                $("#div-ecwalmart").hide();
+                $("#div-ecwalmart input").text("0");
+            }
+            if (pricetypes.indexOf("B") != -1) {
+                //display loblaws
+                $("#div-ecloblaws").show();
+            }
+            else {
+                $("#div-ecloblaws").hide();
+                $("#div-ecloblaws input").val("0");
+            }
+            if (pricetypes.indexOf("M") != -1) {
+                //display save of foods
+                $("#div-ecsaveonfoods").show();
+            }
+            else {
+                $("#div-ecsaveonfoods").hide();
+                $("#div-ecloblaws input").text("0");
+            }
+            if ((pricetypes.indexOf("6") == -1) && (pricetypes.indexOf("B") == -1) && (pricetypes.indexOf("M") == -1) && (pricetypes.indexOf("I") == -1) && (pricetypes.indexOf("P") == -1)) {
+                $("#btn-step4back").attr('onclick','Step2()');
+                Step4();
+            }
+            else {
+                $("#btn-step4back").attr('onclick', 'Step3()');
+            }
+        }
+        function selectAllitemgroups() {
+            $('#selitemGroups option').attr('selected', true);
+            $("#selitemGroups").data("selectpicker").refresh();
+            itemgroupval = true;
+            validatePCEStep1();
+        }
+        $('#btn-exportExcel').on('click', function () {
+            $('.buttons-excel').click()
+        });
+        function valudatePCEStep2(){
+
+            if ($(".fa-minus-circle").length > 0) {
+                $("#btnStep3").text('Next Step');
+                $("#btnStep3").prop('disabled', false);
+            }
+            else {
+                $("#btnStep3").text('Must Select Program');
+                $("#btnStep3").prop('disabled', true);
+            }
+        }
+        
+        
+    </script>
+    <script>
+        function loadPriceTypes() {
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("GetPriceTypes", "Home")',
+                success: function (response) {
+                    if (response.status == "error") {
+                        $("#section_error").html(RenderError(response.errorcode, response.errormsg.toString(), response.errorsrc.toString()));
+                        $("#btn_loginload").hide();
+                        $("#btn_login").show();
+
+                    }
+                    else {
+                        $("#dataTable-program").DataTable().destroy();
+                        $("#dataTable-program tbody").html("");
+                        var responseArr = JSON.parse(response.toString());
+
+                        //Create option for each brand retrieved
+                        for (i = 0; i < responseArr.length; i++) {
+                            var rowhtml = "";
+                            rowhtml += "<tr>";
+                            rowhtml += "<td> <a href='#?' class='group-item'><i class='fa fa-plus-circle'></i></a></td >";
+                            rowhtml += "<td>" + responseArr[i].PriceTypeName + "</td >";
+                            rowhtml += "<td>" + responseArr[i].PriceTypeCode + "</td>";
+                            rowhtml += "</tr>";
+                            $("#dataTable-program tbody").append(rowhtml);
+                            
+                        }
+                        $(".group-item").click(function () {
+                            if (!$(this).children().hasClass('fa-check-circle-o')) {
+                                $(this).parent().parent().toggleClass("table-info");
+                                $(this).children().toggleClass("fa-minus-circle");
+                            }
+                            valudatePCEStep2();
+                        });
+                        $('#dataTable-program').DataTable();
+                        
+                    }
+                },
+                error: function (request, status, error) {
+                    alert('Error occured');
+                    alert(request.responseText);
+                }
+            });
+        }
+        function GetCMPillar() {
+            var brand = $(".data-brand").text();
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("GetBrandPillar", "Home")',
+                dataType: 'JSON',
+                data: { brand: brand},
+                success: function (response) {
+                    if (response.status == "error") {
+                        $("#section_error").html(RenderError(response.errorcode, response.errormsg.toString(), response.errorsrc.toString()));
+                        $("#btn_loginload").hide();
+                        $("#btn_login").show();
+
+                    }
+                    else {
+                        var pillar = response.toString();
+                        $("#data-pillar").text(pillar)
+                    }
+                },
+                error: function (request, status, error) {
+                    var pillar = request.responseText.toString();
+                    $("#data-pillar").text(pillar)
+                }
+            });
+        }
+        function GetLoblawsEC() {
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("GetLoblawsEC", "Home")',
+                success: function (response) {
+                    if (response.status == "error") {
+                        $("#section_error").html(RenderError(response.errorcode, response.errormsg.toString(), response.errorsrc.toString()));
+                        $("#btn_loginload").hide();
+                        $("#btn_login").show();
+
+                    }
+                    else {
+                        var responseArr = JSON.parse(response.toString());
+                        
+                        //Create default selection
+                        $("#data-ecrate").append('<option value= "" selected="true" disabled>--- Select Costing Category ---</option>');
+                        //Create option for each brand retrieved
+                        for (var i = 0; i < responseArr.length; i++) {
+                            $("#data-ecrate").append('<option value= "' + responseArr[i].Value + '">' + responseArr[i].Text + '</option>');
+                        }
+                    }
+                },
+                error: function (request, status, error) {
+                    alert('Error occured');
+                    alert(request.responseText);
+                }
+            });
+        }
+        function GetMetroEC() {
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("GetMetroEC", "Home")',
+                success: function (response) {
+                    if (response.status == "error") {
+                        $("#section_error").html(RenderError(response.errorcode, response.errormsg.toString(), response.errorsrc.toString()));
+                        $("#btn_loginload").hide();
+                        $("#btn_login").show();
+
+                    }
+                    else {
+                        var responseArr = JSON.parse(response.toString());
+                        //Create default selection
+                        $("#data-ecdept").append('<option value= "" selected="true" disabled>--- Select Costing Category ---</option>');
+                        //Create option for each brand retrieved
+                        for (var i = 0; i < responseArr.length; i++) {
+                            $("#data-ecdept").append('<option value= "' + responseArr[i].Value + '">' + responseArr[i].Text + '</option>');
+                        }
+                    }
+                },
+                error: function (request, status, error) {
+                    alert('Error occured');
+                    alert(request.responseText);
+                }
+            });
+        }
+        function CalculateFormula() {
+            var pricetypedata = $("#dataTable-program").DataTable().rows(".table-info").data();
+            var pricetypes = [];
+            var edlp = $("#data-edlp").val();
+            var edlpmargin = $("#data-edlpmargin").val();
+            var ecrate = $("#data-ecrate").val();
+            var overrate = $("#data-overrate").val();
+            var offinvoice = $("#data-offinvoice").val();
+            //Displaying Loading
+            $("#div-step4loading").show();
+            $("#table-listbyprogram").hide();
+
+            for (i = 0; i < pricetypedata.length; i++) {
+                switch (pricetypedata[i][2].toString()) {
+                    //Walmart
+                    case "6":
+                        var p = { price_type: pricetypedata[i][2].toString(), EDLP_mcb: edlp, EDLP_margin: edlpmargin };
+                        break;
+                    //Loblaws
+                    case "B":
+                        var p = { price_type: pricetypedata[i][2].toString(), EC_rate: ecrate };
+                        break;
+                    //Save On Foods
+                    case "M":
+                        var p = { price_type: pricetypedata[i][2].toString(), Over_rate: overrate, Off_Invoice_rate: offinvoice };
+                        break;
+                    //Other Price Types
+                    default:
+                        var p = { price_type: pricetypedata[i][2].toString()};
+                }
+                pricetypes.push(p);
+            }
+            var url = window.location.pathname;
+            var substr = url.substring(url.lastIndexOf('/') + 1);
+            var cmid = @Request.Params["cmid"];
+            var gid = $("#selitemGroups").val();
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("GetFormulaResults", "Home")',
+                dataType: 'JSON',
+                data: { jsonpricetypes: JSON.stringify(pricetypes).replace(/"/g,"'"), cmid: cmid, gid: gid },
+                success: function (response) {
+                    if (response.status == "error") {
+                        $("#section_error").html(RenderError(response.errorcode, response.errormsg.toString(), response.errorsrc.toString()));
+                        scrolltotop();
+                        loaderFadeout();
+                    }
+                    else {
+                        //$("#table-listbyprogram").DataTable().destroy();
+                        createstep4table(response);
+                        GetCurrentPrice(JSON.stringify(pricetypes).replace(/"/g, "'"), cmid,gid);
+                        loaderFadeout();
+                    }
+                },
+                error: function (request, status, error) {
+                    alert('Error occured');
+                    alert(request.responseText);
+                }
+            });
+        }
+        function GetCurrentPrice(jsonpricetypes, cmid, gid) {
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("GetCurrentPrice", "Home")',
+                dataType: 'JSON',
+                data: { jsonpricetypes: jsonpricetypes, cmid: cmid, gid: gid },
+                success: function (response) {
+                    if (response.status == "error") {
+                        $("#section_error").html(RenderError(response.errorcode, response.errormsg.toString(), response.errorsrc.toString()));
+                        scrolltotop();
+                        loaderFadeout();
+                    }
+                    else {
+                        var parsedresult = JSON.parse(response);
+                        var x = 0;
+                        var nextrow = false;
+                        for (i = 0; i < $("#table-listbyprogram tbody tr").length; i++) {
+                            nextrow = false;
+                            while (!nextrow) {
+                                if (i < parsedresult.length) {
+                                    if ($("#table-listbyprogram tbody tr").eq(x).find(".data-pricetypecode").text() == parsedresult[i][0].toString()) {
+                                        if (parsedresult[i][1].toString() != "" || parseFloat(parsedresult[i][1].toString()) != 0) {
+                                            $("#table-listbyprogram tbody tr").eq(x).find(".data-currprice").text("$ "+parsedresult[i][1].toString());
+                                        }
+                                        nextrow = true;
+                                    }
+                                    x++;
+                                }
+                                else {
+                                    nextrow = true;
+                                }
+                                
+                            }
+                            
+                        }
+                        
+                        CalcPercDiff();
+                        loaderFadeout();
+                    }
+                },
+                error: function (request, status, error) {
+                    alert('Error occured');
+                    alert(request.responseText);
+                }
+            });
+        }
+        function CalcPercDiff() {
+            var rows = $("#table-listbyprogram tbody tr").length;
+            var data = $("#table-listbyprogram tbody tr");
+            for (i = 0; i < rows; i++) {
+                //if (data.find(".data-napricetype").eq(i).text() == "Price Type Not Applicable" && data.find(".data-currprice").eq(i).text() != "" && parseFloat(data.find(".data-currprice").eq(i).text()) != 0) {
+                var curr = parseFloat(data.find(".data-currprice").eq(i).text().replace("$ ", ""));
+                    var prop = parseFloat(data.find(".data-proptarget").eq(i).text().replace("$ ", ""));
+                var perc = (prop - curr) / curr;
+                if (isNaN(perc) || perc == Infinity || perc == undefined) {
+                    data.find(".data-percchange").eq(i).text("N/A");
+                    
+                }
+                else {
+                    data.find(".data-percchange").eq(i).text((perc * 100).toFixed(2));
+                }
+                //}
+                //else {
+                //    data.find(".data-percchange").eq(i).text("N/A");
+                //}
+            }
+            $("#table-listbyprogram").dataTable();
+        }
+        function GetGroupItemCount() {
+            var gid = $("#selitemGroups").val();
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("GetGroupItemCount", "Home")',
+                dataType: 'JSON',
+                data: {gid: gid },
+                success: function (response) {
+                    if (response.status == "error") {
+                        $("#section_error").html(RenderError(response.errorcode, response.errormsg.toString(), response.errorsrc.toString()));
+                        scrolltotop();
+                        loaderFadeout();
+                    }
+                    else {
+                        $(".data-groupitemscount").text(response);
+
+                        loaderFadeout();
+                    }
+                },
+                error: function (request, status, error) {
+                    alert('Error occured');
+                    alert(request.responseText);
+                }
+            });
+        }
+    </script>
+}

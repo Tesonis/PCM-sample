@@ -1,0 +1,260 @@
+﻿@model PCM.Models.PCMViewModels.CMViewModel
+
+    <section id="step3" class="step">
+        <a class="prevStep" href="@Url.Action("CostingModel", null, new { id = Model.Costingmodel.ModelID, step = 2 }, Request.Url.Scheme)"><i class="fa fa-long-arrow-left pr-2"></i>Previous Step</a>
+        <hr />
+        <div class="row col-12 m-0 p-0">
+            <div>
+                <h5 class="text-muted">Financial Impact on Brand:</h5>
+            </div>
+            @*<div class="buttons ml-auto my-3">
+                    <button type="button" class="btn btn-outline-primary active" id="btn-FinancialAllItems">All Items</button>
+                    <button type="button" class="btn btn-outline-primary" id="btn-FinancialAffectedItems">Affected Items Only</button>
+                </div>*@
+        </div>
+        @Html.HiddenFor(m => m.Costingmodel.ModelID, new { @id = "data-modelid"})
+        <form onsubmit="Step3Submit()">
+            <div id="div-FinancialAllItems">
+                <table class="table text-right mt-4">
+                    <thead>
+                        <tr class="text-center">
+                            <th class="w-30"></th>
+                            <th class="w-20" colspan="2">Affected items</th>
+                            <th class="w-20" colspan="2">Unaffected items</th>
+                            <th class="w-30 table-success" colspan="4">All items</th>
+                        </tr>
+                        <tr class="table-light">
+                            <th></th>
+                            <th style="width:10%;">Last 12 Periods</th>
+                            <th style="width:10%;">Next 12 Periods</th>
+                            <th style="width:10%;">Last 12 Periods</th>
+                            <th style="width:10%;">Next 12 Periods</th>
+                            <th>Last 12 Periods</th>
+                            <th>Next 12 Periods</th>
+                            <th>Change</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-left"><b>Cases</b></td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Affectedl12cases, new { @id = "val-Affectedl12cases", @readonly = "readonly", @class = "form-control float-right text-right border-0 bg-white pr-0" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Affectedn12cases, new { @id = "val-Affectedn12cases", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Unaffectedl12cases, new { @id = "val-Unaffectedl12cases", @readonly = "readonly", @class = "form-control float-right text-right border-0 bg-white pr-0" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Unaffectedn12cases, new { @id = "val-Unaffectedn12cases", @class = "form-control text-right currencyinput" })</td>
+                            <td><span id="val-L12totalcases"></span></td>
+                            <td><span id="val-N12totalcases"></span></td>
+                            <td id="val-Changetotalcases" class="changenum"></td>
+                        </tr>
+                        <tr>
+                            <td class="text-left"><b>Gross Sales</b></td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Affectedl12price, new { @id = "val-Affectedl12price", @readonly = "readonly", @class = "form-control float-right text-right border-0 bg-white pr-0" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Affectedn12price, new { @id = "val-Affectedn12price", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Unaffectedl12price, new { @id = "val-Unaffectedl12price", @readonly = "readonly", @class = "form-control float-right text-right border-0 bg-white pr-0" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Unaffectedn12price, new { @id = "val-Unaffectedn12price", @class = "form-control text-right currencyinput" })</td>
+                            <td id="val-L12totalgrosssales"></td>
+                            <td id="val-N12totalgrosssales"></td>
+                            <td id="val-Changegrosssales" class="changenum"></td>
+                        </tr>
+                        <tr>
+                            <td class="text-left text-success"><b>Average Price / Case (CAD)</b></td>
+                            <td id="val-L12affectedappc"></td>
+                            <td id="val-N12affectedappc"></td>
+                            <td id="val-L12unaffectedappc"></td>
+                            <td id="val-N12unaffectedappc"></td>
+                            <td id="val-L12appc"></td>
+                            <td id="val-N12appc"></td>
+                            <td id="val-Changeappc" class="changenum"></td>
+                        </tr>
+                        <tr>
+                            <td class="text-left"><b>Terms ($)</b></td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Affectedl12terms, new { @id = "val-Affectedl12terms", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Affectedn12terms, new { @id = "val-Affectedn12terms", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Unaffectedl12terms, new { @id = "val-Unaffectedl12terms", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Unaffectedn12terms, new { @id = "val-Unaffectedn12terms", @class = "form-control text-right currencyinput" })</td>
+                            <td id="val-L12terms"></td>
+                            <td id="val-N12terms"></td>
+                            <td id="val-Changeterms" class="changenum"></td>
+                        </tr>
+                        <tr>
+                            <td class="text-left"><b>Volume Rebates ($)</b></td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Affectedl12volumerebates, new { @id = "val-Affectedl12volumerebates", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Affectedn12volumerebates, new { @id = "val-Affectedn12volumerebates", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Unaffectedl12volumerebates, new { @id = "val-Unaffectedl12volumerebates", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Unaffectedn12volumerebates, new { @id = "val-Unaffectedn12volumerebates", @class = "form-control text-right currencyinput" })</td>
+                            <td id="val-L12volumerebates"></td>
+                            <td id="val-N12volumerebates"></td>
+                            <td id="val-Changevolumerebates" class="changenum"></td>
+                        </tr>
+                        <tr>
+                            <td class="text-left"><b>Customer Programs ($)</b></td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Affectedl12customerprograms, new { @id = "val-Affectedl12customerprograms", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Affectedn12customerprograms, new { @id = "val-Affectedn12customerprograms", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Unaffectedl12customerprograms, new { @id = "val-Unaffectedl12customerprograms", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Unaffectedn12customerprograms, new { @id = "val-Unaffectedn12customerprograms", @class = "form-control text-right currencyinput" })</td>
+                            <td id="val-L12customerprograms"></td>
+                            <td id="val-N12customerprograms"></td>
+                            <td id="val-Changecustomerprograms" class="changenum"></td>
+                        </tr>
+                        <tr>
+                            <td class="text-left"><b>Gross Sales Less Customer Programs</b></td>
+                            <td id="val-L12affectedgrosslessprograms"></td>
+                            <td id="val-N12affectedgrosslessprograms"></td>
+                            <td id="val-L12unaffectedgrosslessprograms"></td>
+                            <td id="val-N12unaffectedgrosslessprograms"></td>
+                            <td id="val-L12grosslessprograms"></td>
+                            <td id="val-N12grosslessprograms"></td>
+                            <td id="val-Changegrosslessprograms" class="changenum"></td>
+                        </tr>
+                        <!--Change to TextboxFor-->
+                        <tr>
+                            <td class="text-left"><b>Off Invoice ($)</b></td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Affectedl12offinvoice, new { @id = "val-Affectedl12offinvoice", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Affectedn12offinvoice, new { @id = "val-Affectedn12offinvoice", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Unaffectedl12offinvoice, new { @id = "val-Unaffectedl12offinvoice", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Unaffectedn12offinvoice, new { @id = "val-N12unaffectedoffinvoice", @class = "form-control text-right currencyinput" })</td>
+                            <td id="val-L12offinvoice"></td>
+                            <td id="val-N12offinvoice"></td>
+                            <td id="val-Changeoffinvoice" class="changenum"></td>
+                        </tr>
+                        <!--Change to TextboxFor-->
+                        <tr>
+                            <td class="text-left"><b>Credits ($)</b></td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Affectedl12credits, new { @id = "val-Affectedl12credits", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Affectedn12credits, new { @id = "val-Affectedn12credits", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Unaffectedl12credits, new { @id = "val-Unaffectedl12credits", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Unaffectedn12credits, new { @id = "val-N12unaffectedcredits", @class = "form-control text-right currencyinput" })</td>
+                            <td id="val-L12credits"></td>
+                            <td id="val-N12credits"></td>
+                            <td id="val-Changecredits" class="changenum"></td>
+                        </tr>
+                        <!--Change to TextboxFor-->
+                        <tr>
+                            <td class="text-left"><b>Customer Marketing Spend ($)</b></td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Affectedl12marketingspend, new { @id = "val-Affectedl12marketingspend", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Affectedn12marketingspend, new { @id = "val-Affectedn12marketingspend", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Unaffectedl12marketingspend, new { @id = "val-Unaffectedl12marketingspend", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Unaffectedn12marketingspend, new { @id = "val-Unaffectedn12marketingspend", @class = "form-control text-right currencyinput" })</td>
+                            <td id="val-L12marketingspend"></td>
+                            <td id="val-N12marketingspend"></td>
+                            <td id="val-Changemarketingspend" class="changenum"></td>
+                        </tr>
+                        <tr>
+                            <td class="text-left"><b>Net Sales</b></td>
+                            <td id="val-L12affectednetsales"></td>
+                            <td id="val-N12affectednetsales"></td>
+                            <td id="val-L12unaffectednetsales"></td>
+                            <td id="val-N12unaffectednetsales"></td>
+                            <td id="val-L12totalnetsales"></td>
+                            <td id="val-N12totalnetsales"></td>
+                            <td id="val-Changenetsales" class="changenum"></td>
+                        </tr>
+                        <tr>
+                            <td class="text-left"><b>Cost of Goods Sold</b></td>
+                            <td id="val-L12affectedcogs">32500</td>
+                            <td id="val-N12affectedcogs"></td>
+                            <td id="val-L12unaffectedcogs">32500</td>
+                            <td id="val-N12unaffectedcogs"></td>
+                            <td id="val-L12totalcogs"></td>
+                            <td id="val-N12totalcogs"></td>
+                            <td id="val-Changecogs" class="changenum"></td>
+                        </tr>
+                        <tr>
+                            <td class="text-left"><b>Gross Margin</b></td>
+                            <td id="val-L12affectedgrossmargin"></td>
+                            <td id="val-N12affectedgrossmargin"></td>
+                            <td id="val-L12unaffectedgrossmargin"></td>
+                            <td id="val-N12unaffectedgrossmargin"></td>
+                            <td id="val-L12totalgrossmargin"></td>
+                            <td id="val-N12totalgrossmargin"></td>
+                            <td id="val-Changegrossmargin" class="changenum"></td>
+                        </tr>
+                        <tr>
+                            <td class="text-left text-success"><b>Gross Margin $ / Case</b></td>
+                            <td id="val-L12affectedgrossmargincase"></td>
+                            <td id="val-N12affectedgrossmargincase"></td>
+                            <td id="val-L12unaffectedgrossmargincase"></td>
+                            <td id="val-N12unaffectedgrossmargincase"></td>
+                            <td id="val-L12totalgrossmargincase"></td>
+                            <td id="val-N12totalgrossmargincase"></td>
+                            <td id="val-Changegrossmargincase" class="changenum"></td>
+                        </tr>
+                        <tr>
+                            <td class="text-left"><b>Variable Operating Expense</b></td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Affectedl12varopex, new { @id = "val-Affectedl12varopex", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Affectedn12varopex, new { @id = "val-Affectedn12varopex", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Unaffectedl12varopex, new { @id = "val-Unaffectedl12varopex", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.Unaffectedn12varopex, new { @id = "val-Unaffectedn12varopex", @class = "form-control text-right currencyinput" })</td>
+                            <td id="val-L12totalvaropex"></td>
+                            <td id="val-N12totalvaropex"></td>
+                            <td id="val-Changevaropex" class="changenum"></td>
+                        </tr>
+                        <tr>
+                            <td class="text-left text-success"><b>Variable Operating Expense $ / Case</b></td>
+                            <td id="val-L12affectedvaropexcase">1.47</td>
+                            <td id="val-N12affectedvaropexcase">1.47</td>
+                            <td id="val-L12unaffectedvaropexcase">1.47</td>
+                            <td id="val-N12unaffectedvaropexcase">1.47</td>
+                            <td id="val-L12totalvaropexcase">1.47</td>
+                            <td id="val-N12totalvaropexcase">1.47</td>
+                            <td id="val-Changevaropexcase" class="changenum">0</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left"><b>Contribution Margin</b></td>
+                            <td id="val-L12affectedconmargin"></td>
+                            <td id="val-N12affectedconmargin"></td>
+                            <td id="val-L12unaffectedconmargin"></td>
+                            <td id="val-N12unaffectedconmargin"></td>
+                            <td id="val-L12totalconmargin"></td>
+                            <td id="val-N12totalconmargin"></td>
+                            <td id="val-Changeconmargin" class="changenum"></td>
+                        </tr>
+                        <tr>
+                            <td class="text-left text-success"><b>Contribution Margin $ / Case</b></td>
+                            <td id="val-L12affectedconmargincase"></td>
+                            <td id="val-N12affectedconmargincase"></td>
+                            <td id="val-L12unaffectedconmargincase"></td>
+                            <td id="val-N12unaffectedconmargincase"></td>
+                            <td id="val-L12totalconmargincase"></td>
+                            <td id="val-N12totalconmargincase"></td>
+                            <td id="val-Changeconmargincase" class="changenum"></td>
+                        </tr>
+                        <tr>
+                            <td class="text-left"><b>Direct Operating Expense (Sales & Marketing)</b></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.L12directopex, new { @id = "val-L12directopex", @class = "form-control text-right currencyinput" })</td>
+                            <td>@Html.TextBoxFor(x => x.Costingmodel.Data.N12directopex, new { @id = "val-N12directopex", @class = "form-control text-right currencyinput" })</td>
+                            <td id="val-Changedirectopex" class="changenum">0</td>
+                        </tr>
+                        <tr class="table-success">
+                            <td class="text-left"><b>Contribution Margin (After Direct OpEx)</b></td>
+                            <td id="val-L12affectedconmarginA"></td>
+                            <td id="val-N12affectedconmarginA"></td>
+                            <td id="val-L12unaffectedconmarginA"></td>
+                            <td id="val-N12unaffectedconmarginA"></td>
+                            <td id="val-L12totalconmarginA"></td>
+                            <td id="val-N12totalconmarginA"></td>
+                            <td id="val-ChangeconmarginA" class="changenum"></td>
+                        </tr>
+                        <tr class="table-success">
+                            <td class="text-left"><b>Contribution Margin (After Direct OpEx) $ / Case</b></td>
+                            <td id="val-L12affectedconmarginAcase"></td>
+                            <td id="val-N12affectedconmarginAcase"></td>
+                            <td id="val-L12unaffectedconmarginAcase"></td>
+                            <td id="val-N12unaffectedconmarginAcase"></td>
+                            <td id="val-L12totalconmarginAcase"></td>
+                            <td id="val-N12totalconmarginAcase"></td>
+                            <td id="val-ChangeconmarginAcase" class="changenum"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <hr />
+            <div class="row pt-4">
+                <a id="btnFinalizeCM" class="btn btn-lg btn-outline-success ml-auto" href="@Url.Action("CostingModel", null, new { id = Model.Costingmodel.ModelID, step = 4 }, Request.Url.Scheme)">Finalize Costing Model</a>
+                @*<button id="btnFinalizeCM" type="submit" class="btn btnStep4 btn-lg btn-outline-success ml-auto">Finalize Costing Model</button>*@
+            </div>
+        </form>
+    </section>

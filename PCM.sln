@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.572
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PCM", "PCM\PCM.csproj", "{1AE3C2DC-4FF1-4DE2-BAF2-4CD13014CB02}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1AE3C2DC-4FF1-4DE2-BAF2-4CD13014CB02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1AE3C2DC-4FF1-4DE2-BAF2-4CD13014CB02}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1AE3C2DC-4FF1-4DE2-BAF2-4CD13014CB02}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1AE3C2DC-4FF1-4DE2-BAF2-4CD13014CB02}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F7215386-83C5-4175-B4C2-149B91C7BC3C}
+	EndGlobalSection
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 2
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = https://dev.azure.com/tolc
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = PCM\\PCM.csproj
+		SccProjectName1 = PCM
+		SccLocalPath1 = PCM
+	EndGlobalSection
+EndGlobal

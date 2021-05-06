@@ -1,0 +1,120 @@
+﻿@using System.Collections.Generic
+@model PCM.Models.AccountViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Log in";
+    Layout = "";
+
+}
+<head>
+    @Styles.Render("~/Content/css")
+    <style>
+        .bg-gradient-primary {
+            background-color: #007CA5;
+            background-image: -webkit-gradient(linear, left top, left bottom, color-stop(10%, #007CA5), to(#7ECBDB));
+            background-image: linear-gradient(180deg, #007CA5 20%, #7ECBDB 100%);
+            background-size: cover;
+        }
+    </style>
+</head>
+
+<body class="app flex-row align-items-center bg-gradient-primary">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card-group">
+                    <div class="card p-4 ">
+                        <div class="card-body">
+                            <div class="text-center">
+                                <div class="text-danger"></div>
+                                <img src="https://treeoflife.ca/wp-content/uploads/2017/11/tol-logo.png" class="img-fluid" /><br />
+                                <h1 class="h4 text-gray-900 mb-4">Welcome Back!</h1>
+                            </div>
+                            <section id="section_error"></section>
+                            <form onsubmit="Login()">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="fa fa-user"></i>
+                                        </span>
+                                    </div>
+                                    @Html.TextBoxFor(m => m.Username, new { @id = "inputUsername", @class = "form-control", @placeholder = "Username", @required = "required" })
+                                    <span class="text-danger"></span>
+                                </div>
+                                <div class="input-group mb-4">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="fa fa-lock"></i>
+                                        </span>
+                                    </div>
+                                    @Html.TextBoxFor(m => m.Password, new { @id = "inputPassword", @class = "form-control", @type = "password", @placeholder = "Password", @required = "required" })
+                                    <span class="text-danger"></span>
+                                </div>
+                                <hr />
+
+                                <div class="row">
+                                    <div class="col-12 mx-auto">
+                                        <button id="btn_login" type="submit" class="btn btn-lg btn-block btn-primary">Login</button>
+                                        <button id="btn_loginload" class="btn btn-lg btn-block btn-primary" disabled style="display:none;">
+                                            <span class="spinner-border spinner-border-sm"></span>
+                                            Loading..
+                                        </button>
+                                    </div>
+                                </div>
+
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap and necessary plugins-->
+    <script src="~/Scripts/jquery-3.3.1.min.js"></script>
+    <script src="~/Scripts/bootstrap.min.js"></script>
+    <script src="~/Scripts/core.js"></script>
+    <script src="~/Scripts/Site/Error.js"></script>
+    <!--AJAX Login-->
+    <script type="text/javascript">
+        function Login() {
+            event.preventDefault();
+            $("#btn_login").hide();
+            $("#btn_loginload").show();
+            var username = $("#inputUsername").val();
+            var password = $("#inputPassword").val();
+            var role = $("input[name='radio-role']:checked").val();
+            var url = window.location.href;
+            var p = "";
+            var id = "";
+            @if (Request.Params["p"] != null && Request.Params["id"] != null)
+            {
+                @:{  p = "@Request.Params["p"]" };
+                @:{  id = "@Request.Params["id"]" };
+            }
+            $.ajax({
+            type: "GET",
+                url: '@Url.Action("LoginAJAX", "Account")',
+                dataType: 'JSON',
+                data: { username: username, password:password, role: role, page: p, id: id },
+                success: function (response) {
+                    if (response.status == "error") {
+                        $("#section_error").html(RenderError(response.errorcode, response.errormsg.toString(), response.errorsrc.toString()));
+                        $("#btn_loginload").hide();
+                        $("#btn_login").show();
+
+                    }
+                    if (response.url) {
+                        // if the server returned a JSON object containing an url
+                        // property we redirect the browser to that url
+                        window.location.href = response.url;
+                    }
+                },
+                error: function (request, status, error) {
+                    alert('Error occured');
+                    alert(request.responseText);
+                }
+            });
+        }
+    </script>
+</body>

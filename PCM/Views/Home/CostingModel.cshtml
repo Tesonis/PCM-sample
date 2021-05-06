@@ -1,0 +1,527 @@
+﻿
+@{
+    ViewBag.Title = "CostingModel";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.step = Model.Step;
+    ViewBag.Name = Request.Cookies["SecToken"]["FullName"];
+    ViewBag.Brand = Model.Brand;
+}
+@model PCM.Models.PCMViewModels.CMViewModel
+@Styles.Render("~/Content/bs-select")
+@Styles.Render("~/Content/css")
+@Styles.Render("~/Content/Site.css")
+<link href="~/Content/Site.css" rel="stylesheet" />
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="@Url.Action("PCMMain", null, new { area = string.Empty, controller = "Home" }, Request.Url.Scheme)"><i class="fa fa-lg fa-home pr-2"></i><b><u>Price Change Management</u></b></a></li>
+        <li class="breadcrumb-item active" aria-current="page"><b>Costing Model</b></li>
+    </ol>
+</nav>
+<div class="bg-white py-3 multi_step_form">
+    <div class="mx-auto text-center py-4"><h2 class="text-muted">Costing Model</h2></div>
+    <div class="row ">
+        <ul class="progressbar col-8 mx-auto">
+            <li><a id="progressstep1">Select Brand</a></li>
+            <li><a id="progressstep2">Create Costing Analysis</a></li>
+            @*<li><a id="progressstep3">Review Financial P&L</a></li>*@
+            <li><a id="progressstep4">Provide Documentation & Submission</a></li>
+        </ul>
+    </div>
+    <hr />
+    <div class="row container-fluid">
+        <div id="multiForm" class="container-fluid mx-auto">
+            <section id="errorsection">
+                @if (TempData["errorcode"] != null && TempData["errorcode"].ToString() != "0")
+                {
+                    Html.RenderPartial("_ErrorCodeMessage", Model.errorvm);
+                }
+            </section>
+
+            @{
+                if (Model.Step == 1)
+                {
+                    Html.RenderPartial("_CMStep1");
+                }
+
+            }
+
+
+            @{
+                if (Model.Step == 2)
+                {
+                    Html.RenderPartial("_CMStep2");
+                }
+
+            }
+            @*@{
+                    if (Model.Step == 3)
+                    {
+                        Html.RenderPartial("_CMStep3");
+                    }
+
+                }*@
+            @{
+                if (Model.Step == 3)
+                {
+                    Html.RenderPartial("_CMStep4");
+                }
+
+            }
+            <div class="modal fade" id="modalWarningSave" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-danger" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">You have unsaved work</h4>
+                            <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">×</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Continuing will result in loss of unsaved work.</p>
+                        </div>
+                        <div class="modal-footer">
+                            <a id="btnWarningSave" class="btn btn-primary" href="@Url.Action("CostingModel", null, new { id = Model.Costingmodel.ModelID, step = 2})">Continue</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="modalDeleteGroup" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-danger" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">This item group will be deleted</h4>
+                            <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">×</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Deleting this group will remove all changes for the costing analysis. Items selected will be made available in the table.</p>
+                            <p>This action cannot be undone</p>
+                        </div>
+                        <div class="modal-footer">
+                            <a id="btnDeletegroupmodal" class="btn btn-danger" href=""><i class="fa fa-trash pr-2"> </i> <span>Delete Item Group</span></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script src="~/Scripts/Site/formwizard.js"></script>
+    <script src="~/Scripts/Site/costingcalculator.js"></script>
+    <script src="~/Scripts/Site/Calc.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('[data-toggle="popover"]').popover();
+            $('#table_groupitems').DataTable({
+                "columnDefs": [
+                    { "orderable": false, "targets": 0 },
+                    { "width": "20%", "targets": 2 }
+                ],
+                "order": [[2, "desc"]]
+            });
+            var itemlist = $("#table_groupitems").DataTable().columns().data()[1];
+            var unsavedchanges = false;
+            ListBrandsbyBDM();
+            ListPriceZones();
+            ListCMTypes();
+
+            $("#div-loader").fadeOut();
+
+            @if (Request.Params["step"] != null)
+            {
+                if (Request.Params["step"] == "2")
+                {
+                    @:{ getCurrencyExchange(); }
+                    if (Request.Params["gid"] != null)
+                    {
+                        @:{$("#tempitemgroup").show();}
+                        @:{ updateItemList(); }
+                        @:{ loadCosting(); }
+                        if (Model.Costingmodel.Type == "0")
+                        {
+                            @:{ calculateCostingAllItems("", "baseline"); }
+                        }
+                        else
+                        {
+                            @:{ calculateCostingAllItems(""); }
+                        }
+
+
+
+                    }
+                    else {
+                        @:{$("#div-progressbtn").hide();}
+                        @:{$("#tempitemgroup").hide();}
+                    }
+
+                    @:{ $(".progressbar li").removeClass("active"); }
+                    @:{ $(".progressbar li").eq(0).addClass("active"); }
+
+
+                }
+                if (Request.Params["step"] == "3")
+                {
+                    @:{ calculateFinancialAllItems(); }
+                    @:{ $(".progressbar li").removeClass("active"); }
+                    @:{ $(".progressbar li").eq(0).addClass("active"); }
+                    @:{ $(".progressbar li").eq(1).addClass("active"); }
+                }
+
+            }
+
+            });
+
+        $(window).keydown(function (event) {
+            if (event.keyCode == 13) {
+                event.preventDefault();
+                return false;
+            }
+        });
+        //Calculates based on which input was used
+        $(".itemgroupform input").change(function () {
+            if ( @Model.Costingmodel.Type.ToString() == "0") {
+                var type = "baseline";
+                }
+                else {
+                    var type = "";
+            }
+            switch ($(this).attr("id")) {
+                case "data-propwholesaleppc":
+                    calculateCostingAllItems("wholesale", type);
+                    break;
+                case "data-propdsdppc" :
+                    calculateCostingAllItems("dsd", type);
+                    break;
+                case "data-propwholesalesuggestedppc":
+                    calculateCostingAllItems("wholesalesuggested", type);
+                    break;
+                case "data-propdsdsuggestedppc":
+                    calculateCostingAllItems("dsdsuggested", type);
+                    break;
+                case "data-freightcosting":
+                    calculateCostingAllItems("freightnum", type);
+                    break;
+                case "data-freightcostingperc":
+                    calculateCostingAllItems("freightperc", type);
+                    break;
+                case "data-propwholesaletrademargin":
+                    calculateCostingAllItems("wholesaletrade", type);
+                    break;
+                case "data-propdsdtrademargin":
+                    calculateCostingAllItems("dsdtrade", type);
+                    break;
+                default:
+                    calculateCostingAllItems("", type);
+                    break;
+            }
+        });
+
+        $("#btnWarningSave").click(function () {
+            $("#modalWarningSave").modal("hide");
+            loaderFadein();
+        })
+        //Create warning after creating group and not saving
+        function unsavedChangesNav(target) {
+            var gid = target;
+            var parenturl = window.location.href.split('?')[0];
+            var newurl = parenturl.concat("?step=2&gid=", gid);
+            if ($("#tempitemgroup:visible").length > 0) {
+                $("#modalWarningSave").modal("show");
+                $("#modalWarningSave a").attr("href", newurl);
+            }
+            else {
+                window.location.href = newurl;
+            }
+
+        };
+    </script>
+
+
+    <!--AJAX Calls-->
+    <script>
+        function ListBrandsbyBDM() {
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("ListBrandsbyBDM", "Home")',
+                dataType: 'JSON',
+                success: function (response) {
+                    if (response.status == "error") {
+                        $("#section_error").html(RenderError(response.errorcode, response.errormsg.toString(), response.errorsrc.toString()));
+                    }
+                    else {
+                        var responseArr = JSON.parse(response.toString());
+                        //Create default selection
+                        $("#select_brand").append('<option value= "" selected="true" disabled>--- No Brand Selected ---</option>');
+                        //Create option for each brand retrieved
+                        for (var i = 0; i < responseArr.length; i++) {
+                            $("#select_brand").append('<option value= "' + responseArr[i].Value + '">' + responseArr[i].Text + '</option>');
+                        }
+                        //Refresh bootstrap select to display new options
+                        $("#select_brand").selectpicker("refresh");
+
+                    }
+                },
+                error: function () {
+                    $("#section_error").html(RenderError("-1", "Unexpected Error", "Get Brand List"));
+                }
+            });
+        }
+        function ListPriceZones() {
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("ListPriceZones", "Home")',
+                dataType: 'JSON',
+                success: function (response) {
+                    if (response.status == "error") {
+                        $("#section_error").html(RenderError(response.errorcode, response.errormsg.toString(), response.errorsrc.toString()));
+                    }
+                    else {
+                        var responseArr = JSON.parse(response.toString());
+                        //Create option for each brand retrieved
+                        for (var i = 0; i < responseArr.length; i++) {
+                            $("#select_zone").append('<option value= "' + responseArr[i].Value + '">' + responseArr[i].Text + '</option>');
+                        }
+
+                    }
+                },
+                error: function () {
+                    $("#section_error").html(RenderError("-1", "Unexpected Error", "Get Price Zone"));
+                }
+            });
+        }
+        function ListCMTypes() {
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("ListCMTypes", "Home")',
+                dataType: 'JSON',
+                success: function (response) {
+                    if (response.status == "error") {
+                        $("#section_error").html(RenderError(response.errorcode, response.errormsg.toString(), response.errorsrc.toString()));
+                    }
+                    else {
+                        var responseArr = JSON.parse(response.toString());
+                        //Create option for each brand retrieved
+                        $("#select_cmtype").append('<option value= "" selected>Select</option>');
+                        for (var i = 0; i < responseArr.length; i++) {
+                            $("#select_cmtype").append('<option value= "' + responseArr[i].Value + '">' + responseArr[i].Text + '</option>');
+                        }
+
+                    }
+                },
+                error: function () {
+                    $("#section_error").html(RenderError("-1", "Unexpected Error", "Get Price Zone"));
+                }
+            });
+        }
+        $('#select_brand').change(function () {
+
+            var data = $(this).val().toString();
+
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("GetVendorsFromBrand", "Home")',
+                dataType:'JSON',
+                data: { brandid: data },
+                success: function (response) {
+                    data = response;
+                    $("#select_vendor").empty();
+                    if (data.length > 1) {
+                        $("#select_vendor").append(
+                            $('<option selected></option>').val("").html("Select Vendor")
+                        );
+                    }
+                    $.each(data, function (i, data) {
+                        $("#select_vendor").append(
+                            $('<option></option>').val(data.Value).html(data.Text)
+                        );
+                    });
+                    autofillcmname();
+                    return response;
+                },
+                error: function (request, status, error) {
+                    alert('Error occured');
+                    alert(request.responseText);
+                }
+            });
+        });
+        function autofillcmname() {
+            //Get current date
+            var today = new Date();
+            var dd = String(today.getDate()).padStart(2, '0');
+            var mm = String(today.getMonth() + 1).padStart(2, '0');
+            var yyyy = today.getFullYear();
+            today = mm + '/' + dd + '/' + yyyy;
+
+            var concattxt = $("#select_brand :selected").text().split("  ")[0];
+            concattxt = concattxt.replace("'", "");
+            $("#txt_cmname").val(concattxt + " - " + today);
+        }
+        function getCurrencyExchange() {
+            var vendorid = $("#data-vendorid").val();
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("GetCurrencyExchange", "Home")',
+                dataType:'JSON',
+                data: { vendorid: vendorid },
+                success: function (response) {
+                    if (response.length == 2) {
+                        $("#data-currencycode").val(response[0].toString());
+                        @if (Request.Params["gid"] == null) {
+                            @:{ $("#data-exchangerate").val(Number(response[1]).toFixed(3));}
+                        }
+                        
+                    }
+                    else {
+                        alert("Error Retriving Exchange Rate. Please enter values manually.");
+                        $("#data-currencycode").val(response[0].toString());
+                        $("#data-exchangerate").val(1);
+                    }
+                    return response;
+                },
+                error: function (request, status, error) {
+                    alert('Error occured');
+                    alert(request.responseText);
+                }
+            });
+        }
+        function CostingModelCreate() {
+            if (validate()) {
+                loaderFadein();
+                var brand = $("#select_brand").val();
+                var vendor = $("#select_vendor").val();
+                var zone = parseInt($("#select_zone").val());
+                var type = parseInt($("#select_cmtype").val());
+                var name = $("#txt_cmname").val();
+                $.ajax({
+                type: "POST",
+                url: '@Url.Action("CostingModelCreate", "Home")',
+                dataType:'JSON',
+                data: { brand, vendor, zone, type, name},
+                    success: function (response) {
+                    if (response.status == "error") {
+                        $("#section_error").html(RenderError(response.errorcode, response.errormsg.toString(), response.errorsrc.toString()));
+                        loaderFadeout();
+                    }
+                    else {
+                        window.location.replace(response.url);
+                    }
+                },
+                error: function (request, status, error) {
+                    alert('Error occured during process. Please report this issue to IT with the following message.');
+                    alert(request.responseText);
+                    loaderFadeout();
+                }
+            });
+            }
+        }
+        function CostingModelUpdateName() {
+            if (validate()) {
+                loaderFadein();
+                var name = $("#txt_cmname").val();
+                var brand = $("#select_brand_u").val();
+                var vendor = $("#select_vendor_u").val();
+                var zone = parseInt($("#select_zone_u").val());
+                var type = parseInt($("#select_cmtype_u").val());
+                var url = window.location.pathname;
+                var substr = url.substring(url.lastIndexOf('/') + 1);
+                var cmid = substr.split('?')[0];
+                $.ajax({
+                type: "POST",
+                url: '@Url.Action("CostingModelUpdateName", "Home")',
+                dataType:'JSON',
+                    data: { cmid, brand, vendor, zone, type, name},
+                success: function (response) {
+                    if (response.status == "error") {
+                        loaderFadeout();
+                        $("#section_error").html(RenderError(response.errorcode, response.errormsg.toString(), response.errorsrc.toString()));
+                    }
+                    else {
+                        window.location.replace(response.url);
+                    }
+                },
+                error: function (request, status, error) {
+                    alert('Error occured during process. Please report this issue to IT with the following message.');
+                    alert(request.responseText);
+                    loaderFadeout();
+                }
+            });
+            }
+        }
+        function CostingModelUpdateComment(cmd) {
+            if (validate()) {
+                loaderFadein();
+                var name = $("#data-cmname").val();
+                var brand = $("#data-cmbrand").val();
+                var vendor = $("#data-cmvendor").val();
+                var zone = $("#data-cmzone").val();
+                var type = parseInt($("#data-cmtype").val());
+                var comment = $("#txt-comment").val();
+                var url = window.location.pathname;
+                var substr = url.substring(url.lastIndexOf('/') + 1);
+                var cmid = substr.split('?')[0];
+
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("SubmitCostingModel", "Home")',
+                    dataType: 'JSON',
+                    data: { cmid, brand, vendor, zone, type, name, comment, cmd },
+                    success: function (response) {
+                        if (response.status == "error") {
+                            loaderFadeout();
+                            $("#section_error").html(RenderError(response.errorcode, response.errormsg.toString(), response.errorsrc.toString()));
+                        }
+                        else {
+                            window.location.replace(response.url);
+                        }
+                    },
+                    error: function (request, status, error) {
+                        alert('Error occured during process. Please report this issue to IT with the following message.');
+                        alert(request.responseText);
+                        loaderFadeout();
+                    }
+                });
+            }
+            else {
+                $("#section_error").html(RenderError(-1, "", ""));
+            }
+        }
+    </script>
+    <script>
+        var onSuccess = function (result) {
+            if (result.url) {
+                // if the server returned a JSON object containing an url
+                // property we redirect the browser to that url
+                window.location.href = result.url;
+            }
+            else if ($("#errorsection").children().html() != null) {
+                loaderFadeout();
+            }
+        }
+
+    </script>
+    <!--Autogen Delete modal values-->
+    <script>
+        function deleteGroupWarning(id, gid) {
+            var parenturl = window.location.href.split('CostingModel/')[0];
+            var newurl = parenturl.concat("CostingAnalysis?p=d&id=" + id + "&gid=" + gid);
+            $("#btnDeletegroupmodal").attr("href", newurl);
+        }
+    </script>
+    <!--Prevent entering non numeric on Edge, firefox-->
+    <script>
+        function currinput(evt) {
+            var charCode = (evt.which) ? evt.which : evt.keyCode;
+            if (charCode != 46 && charCode > 31
+                && (charCode < 48 || charCode > 57)) {
+                return false;
+            }
+            if (charCode == 46 && evt.srcElement.value.split('.').length > 1) { return false; }
+            return true;
+        }
+
+    </script>
+
+}

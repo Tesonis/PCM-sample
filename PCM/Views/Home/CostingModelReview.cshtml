@@ -1,0 +1,230 @@
+﻿
+@{
+    ViewBag.Title = "CostingModelReview";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model PCM.Models.PCMViewModels.CMViewModel
+@Styles.Render("~/Content/bs-select")
+@Styles.Render("~/Content/css")
+@Styles.Render("~/Content/Site.css")
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="@Url.Action("PCMMain", null, new { area = string.Empty, controller = "Home" }, Request.Url.Scheme)"><i class="fa fa-lg fa-home pr-2"></i><b><u>Price Change Management</u></b></a></li>
+        <li class="breadcrumb-item active" aria-current="page"><b>Costing Model Review</b></li>
+    </ol>
+</nav>
+<div class="bg-white py-3 multi_step_form">
+    <div class="mx-auto text-center py-4"><h2 class="text-muted">Costing Model</h2></div>
+    <div class="row container-fluid">
+        <div id="multiForm" class="container-fluid mx-auto">
+            <div class="row col-12">
+                <section id="section_error"></section>
+            </div>
+            <div class="alert alert-warning">
+                <strong>This page is read only</strong>
+            </div>
+            <div class="row">
+                <div class="col-12 mt-2">
+                    <div class="py-3"><b>Name of Costing Model</b></div>
+                    @Html.TextBoxFor(x => x.Costingmodel.Modelname, new { @id = "txt_cmname", @class = "form-control bg-white", @placeholder = "Costing Model Name", @required = true })
+                </div>
+                <div class="col-3 text-left">
+                    <div class="mt-2">
+                        <div class="py-3"><b>Brand</b></div>
+                        @Html.DropDownListFor(x => x.Costingmodel.Brand, Model.Brand, new { @id = "select_brand_u", @class = "selectpicker form-control search-result-filter", data_style = "btn-white border-secondary", title = "--- No Brand Selected ---", @required = true, @disabled = "disabled" })
+                    </div>
+                </div>
+                <div class="col-3 text-left">
+                    <div class="mt-2">
+                        <div class="py-3"><b>Vendor</b></div>
+                        @Html.DropDownListFor(x => x.Costingmodel.Vendor, Model.Vendor, new { @id = "select_vendor_u", @class = "selectpicker form-control col-12", data_style = "btn-white border-secondary", title = "--- No Brand Selected ---", @disabled = "disabled" })
+                    </div>
+                </div>
+                <div class="col-3 text-left">
+                    <div class="mt-2">
+                        <div class="py-3"><b>Costing Model Type</b></div>
+                        @Html.DropDownListFor(x => x.Costingmodel.Type, Model.CMType, new { @id = "select_cmtype_u", @class = "selectpicker form-control", data_style = "selectpicker btn-white border-secondary", @required = true, @disabled = "disabled" })
+                    </div>
+                </div>
+                <div class="col-3 text-left">
+                    <div class="mt-2">
+                        <div class="py-3"><b>Zone Pricing</b></div>
+                        @Html.DropDownListFor(x => x.Costingmodel.Zone, Model.PriceZone, new { @id = "select_zone_u", @class = "selectpicker form-control", data_style = "selectpicker btn-white border-secondary", @required = true, @disabled = "disabled" })
+                    </div>
+                </div>
+            </div>
+            @{
+                Html.RenderPartial("_CMStep2");
+            }
+            <div class="form-row row col-6 p-0">
+                <h5>Comments and Assumptions:</h5>
+                @Html.TextAreaFor(x => x.Costingmodel.Data.Comment, new { @id = "txt-comment", @rows = 5, @class = "form-control", @required = "required" })
+            </div>
+
+        </div>
+        <hr />
+        @{
+            if (Model.Costingmodel.Status == 2)
+            {
+                var approvalbrands = Request.Cookies["SecToken"]["ApprovalBrands"].Split(',');
+                //Check whether brand is in approvalbrands
+                if (approvalbrands.Any(x => x.Contains(Model.Costingmodel.Brand.ToString())))
+                {
+                    <section id="submitbuttons" class="col-12 row mt-5">
+                        <button id="btnApproveCM" class="btn btn-lg btn-success col-4 mx-auto" onclick="ApproveCM()">Approve</button>
+                        <button class="btn btn-danger col-4 mx-auto" onclick="$('#modalWarningReject').modal().show()">Reject</button>
+                    </section>
+                }
+            }
+
+        }
+
+    </div>
+    <div class="modal" id="modalWarningReject" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-danger" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Reject Costing Model</h4>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="comment">Comment:</label>
+                        <textarea class="form-control" rows="5" id="txt-rejectcomment"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-danger" type="button" data-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" type="button" onclick="RejectCM()">Reject Costing Model</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script src="~/Scripts/Site/formwizard.js"></script>
+    <script src="~/Scripts/Site/costingcalculator.js"></script>
+    <script src="~/Scripts/Site/Calc.js"></script>
+    <script>
+
+        $(document).ready(function () {
+            $('[data-toggle="popover"]').popover();
+            getCurrencyExchange();
+            updateItemList();
+            loadCosting();
+            calculateCostingAllItems("");
+            $('#table_groupitems').DataTable().destroy();
+            $("#table_groupitems tbody tr").not(".table-info").hide();
+
+
+
+            //Review View Script
+            $("[type='submit']").parent().hide();
+            $(".group-item").hide();
+            $(".prevStep").hide();
+            $("#btnCostingAnalysis").hide();
+            $("#group-short .input-group-append").hide();
+            $(".skipbtn").hide();
+            $("#btnTogglebranditemstable").hide();
+            $("#div-loader").fadeOut();
+            $(".container-fluid .form-control").prop("readonly", true);
+            $(".container-fluid .form-control").addClass("bg-white");
+            $("#modalWarningReject .form-control").prop("readonly", false);
+            $("#tempitemgroup").css("max-height", "")
+            $("#tempitemgroup").css("overflow-y", "")
+        });
+    </script>
+    <script type="text/javascript">
+        function ApproveCM() {
+                loaderFadein();
+                var url = window.location.pathname;
+                var substr = url.substring(url.lastIndexOf('/') + 1);
+                var cmid = substr.split('?')[0];
+                $.ajax({
+                type: "POST",
+                url: '@Url.Action("ApproveCostingModel", "Home")',
+                dataType:'JSON',
+                data: { modelid: cmid},
+                    success: function (response) {
+                    if (response.status == "error") {
+                        $("#section_error").html(RenderError(response.errorcode, response.errormsg.toString(), response.errorsrc.toString()));
+                        loaderFadeout();
+                    }
+                    else {
+                        window.location.replace(response.url);
+                    }
+                },
+                error: function (request, status, error) {
+                    alert('Error occured during process. Please report this issue to IT with the following message.');
+                    alert(request.responseText);
+                    loaderFadeout();
+                }
+            });
+        }
+        function RejectCM() {
+                var url = window.location.pathname;
+                var substr = url.substring(url.lastIndexOf('/') + 1);
+                var cmid = substr.split('?')[0];
+                var rejectcomment = $("#txt-rejectcomment").val();
+                $.ajax({
+                type: "POST",
+                url: '@Url.Action("RejectCostingModel", "Home")',
+                    dataType: 'JSON',
+                    data: { modelid: cmid, rejectcomment: rejectcomment },
+                    success: function (response) {
+                    if (response.status == "error") {
+                        $("#section_error").html(RenderError(response.errorcode, response.errormsg.toString(), response.errorsrc.toString()));
+                        $("#modalWarningReject").modal("hide");
+                        scrolltotop();
+
+                        loaderFadeout();
+                    }
+                    else {
+                        window.location.replace(response.url);
+                    }
+                },
+                error: function (request, status, error) {
+                    alert('Error occured during process. Please report this issue to IT with the following message.');
+                    alert(request.responseText);
+                    loaderFadeout();
+                }
+            });
+        }
+        function getCurrencyExchange() {
+            var vendorid = $("#data-vendorid").val();
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("GetCurrencyExchange", "Home")',
+                dataType:'JSON',
+                data: { vendorid: vendorid },
+                success: function (response) {
+                    if (response.length == 2) {
+                        $("#data-currencycode").val(response[0].toString());
+
+                        $("#data-exchangerate").val(Number(response[1]).toFixed(3));
+                    }
+                    else {
+                        alert("Error Retriving Exchange Rate. Please enter values manually.");
+                        $("#data-currencycode").val(response[0].toString());
+                        $("#data-exchangerate").val(1);
+                    }
+                    return response;
+                },
+                error: function (request, status, error) {
+                    alert('Error occured');
+                    alert(request.responseText);
+                }
+            });
+        }
+        function unsavedChangesNav(target) {
+            var gid = target;
+            var parenturl = window.location.href.split('?')[0];
+            var newurl = parenturl.concat("?step=2&gid=", gid);
+            window.location.href = newurl;
+
+        };
+    </script>
+}

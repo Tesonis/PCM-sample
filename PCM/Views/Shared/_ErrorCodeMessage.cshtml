@@ -1,0 +1,37 @@
+﻿
+@if (TempData["errorcode"].ToString() != "0" && TempData["errorcode"] != null)
+{
+    <div class="row px-3">
+        <div class="alert alert-danger col-12">
+            @switch (Int32.Parse(TempData["errorcode"].ToString()))
+            {
+                case 1:
+                    <b>Connection to server failed:</b> <span>Please check your connection to the server / VPN status</span>
+                    break;
+                case 2:
+                    <b>Cannot Create:</b> <span>A Costing Model of the same name already exists.</span>
+                    break;
+                case 3:
+                    <b>Cannot Update:</b> <span>A Costing Model of the same name already exists.</span>
+                    break;
+                case 4:
+                    <b>Cannot Update:</b> <span>The record you're attempting to update has changed.</span>
+                    break;
+                case 910:
+                    <b>Cannot Delete:</b> <span>The record you're attempting to delete has changed.</span>
+                    break;
+                case 912:
+                    <b>Restricted Access:</b><span>You do not have permission to access this page.</span>
+                    break;
+                case -440:
+                    <b>Database Error (-440):</b><span>The following feature is non-functional. Please report issue to IT.</span>
+                    break;
+                default:
+                    <b>Warning: Unexpected Error. Please try again. <br />If problem persists, contact IT Support with following error message:</b>
+                    <br /><i>Code:@TempData["errorcode"].ToString() --- Message: @TempData["errormsg"].ToString() --- Source: @TempData["errorsrc"]</i>
+                    break;
+                    }
+        </div>
+    </div>
+
+}

@@ -1,0 +1,86 @@
+﻿@model PCM.Models.PCMViewModels.CMViewModel
+
+<section id="step1" class="step mx-auto col-8">
+    
+        @if (Model.Costingmodel.ModelID == null)
+        {
+            <div class="row col-12">
+                <div class="col-12 mx-auto text-left">
+                    <div class="mt-2">
+                        <div class="py-3"><b>Select Brand</b></div>
+                        @Html.DropDownListFor(x => x.Costingmodel.Brand, Enumerable.Empty<SelectListItem>(), new { @id = "select_brand", @class = "selectpicker form-control search-result-filter", data_live_search = "true", data_style = "btn-white border-secondary bg-white", title = "--- No Brand Selected ---", @required = true })
+                    </div>
+                </div>
+                <div class="col-9 text-left">
+                    <div class="mt-2">
+                        <div class="py-3"><b>Select Vendor</b></div>
+                        @Html.DropDownListFor(x => x.Costingmodel.Vendor, Enumerable.Empty<SelectListItem>(), new { @id = "select_vendor", @class = "form-control col-12", data_style = "btn-white border-secondary", title = "--- No Brand Selected ---", @required = true })
+
+                    </div>
+                </div>
+                <div class="col-3 text-left">
+                    <div class="mt-2">
+                        <div class="py-3"><b>Zone Pricing</b></div>
+                        @Html.DropDownListFor(x => x.Costingmodel.Zone, Enumerable.Empty<SelectListItem>(), new { @id = "select_zone", @class = " form-control", @required = true })
+                    </div>
+                </div>
+                <div class="col-12 text-left">
+
+                    <div class="mt-2">
+                        <div class="py-3"><b>Costing Model Type</b></div>
+                        @Html.DropDownListFor(x => x.Costingmodel.Type, Enumerable.Empty<SelectListItem>(), new { @id = "select_cmtype", @class = "form-control", @required = true })
+
+                    </div>
+                </div>
+            </div>
+        }   
+        else
+        {
+        <div class="row mx-auto">
+            <div class="col-12 text-left">
+
+                <div class="mt-2">
+                    <div class="py-3"><b>Brand</b></div>
+                    @Html.DropDownListFor(x => x.Costingmodel.Brand, Model.Brand, new { @id = "select_brand_u", @class = "selectpicker form-control search-result-filter", data_style = "btn-white border-secondary", title = "--- No Brand Selected ---", @required = true, @disabled = "disabled" })
+                </div>
+            </div>
+            <div class="col-9 text-left">
+                <div class="mt-2">
+                    <div class="py-3"><b>Select Vendor</b></div>
+                    @Html.DropDownListFor(x => x.Costingmodel.Vendor, Model.Vendor, new { @id = "select_vendor_u", @class = "selectpicker form-control col-12", data_style = "btn-white border-secondary", title = "--- No Brand Selected ---", @disabled = "disabled" })
+                </div>
+            </div>
+            <div class="col-3 text-left">
+                <div class="mt-2">
+                    <div class="py-3"><b>Zone Pricing</b></div>
+                    @Html.DropDownListFor(x => x.Costingmodel.Zone, Model.PriceZone, new { @id = "select_zone_u", @class = "selectpicker form-control", data_style = "selectpicker btn-white border-secondary", @required = true, @disabled = "disabled" })
+                </div>
+            </div>
+            <div class="col-12 text-left">
+                <div class="mt-2">
+                    <div class="py-3"><b>Costing Model Type</b></div>
+                    @Html.DropDownListFor(x => x.Costingmodel.Type, Model.CMType, new { @id = "select_cmtype_u", @class = "selectpicker form-control", data_style = "selectpicker btn-white border-secondary", @required = true, @disabled = "disabled" })
+                </div>
+            </div>
+        </div>
+        }
+        <div class="row mx-auto text-left">
+            <div class="col-12 mt-2">
+                <div class="py-3"><b>Name of Costing Model</b></div>
+                @Html.TextBoxFor(x => x.Costingmodel.Modelname, new { @id = "txt_cmname", @class = "form-control", @placeholder = "Enter the Costing Model Name", @required = true })
+            </div>
+        </div>
+        <div class="row py-5 col-12 mx-auto">
+            @if (Model.Costingmodel.ModelID == null)
+            {
+                <button id="btnStep2" class="btn btn-lg btn-success ml-auto" type="submit" onclick="CostingModelCreate()">Create Costing Model</button>
+            }
+            else
+            {
+                <button id="updateStep2" class="btn btn-lg btn-success ml-auto" type="submit" onclick="CostingModelUpdateName()">Update Costing Model</button>
+                <a href="@Url.Action("CostingModel", null, new { id=Model.Costingmodel.ModelID, step = 2}, Request.Url.Scheme)" class="btn btn-lg btn-outline-primary ml-3" onclick="loaderFadein()">Skip to next step</a>
+            }
+
+        </div>
+
+</section>

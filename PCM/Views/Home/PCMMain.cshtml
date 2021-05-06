@@ -1,0 +1,660 @@
+﻿
+@{
+    ViewBag.Title = "Price Change Management";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model PCM.Models.PCMViewModels.IndexViewModel
+@Styles.Render("~/Content/bs-select")
+@Styles.Render("~/Content/css")
+@Styles.Render("~/Content/Site.css")
+<link href="~/Content/Site.css" rel="stylesheet" />
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page"><h5 class="text-muted">Price Change Management</h5></li>
+    </ol>
+</nav>
+<div class="py-2">
+    <div class="row">
+        <div class="col-12">
+            @{
+                Html.RenderPartial("_ErrorCodeMessage", Model.errorvm);
+            }
+
+            <section id="section_review" class="mb-4 p-3 bg-white border">
+                <div class="p-3 d-flex align-items-center">
+                    <i class="fa fa-exclamation bg-warning p-3 font-2xl mr-3"></i>
+                    <div>
+                        <div class="text-value-sm text-warning">Outstanding Tasks</div>
+                        @*<div class="text-muted text-uppercase font-weight-bold small">Income</div>*@
+                    </div>
+                </div>
+                @if (Model.allcostingmodel.Count() != 0)
+                {
+                    <table class="table table-bordered datatable" id="table-tasks">
+                        <thead class="thead-light">
+                            <tr>
+                                <th></th>
+                                <th>Date Created</th>
+                                <th>Type</th>
+                                <th>Name</th>
+                                <th>Costing Model Type</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var cm in Model.allcostingmodel)
+                            {
+                                //team leaders and execs
+                                //show approval requested
+                                if (cm.Status == 2 && (Model.role == "admin" || Model.role == "exec" || Model.role == "lead"))
+                                {
+                                    var approvalbrands = Request.Cookies["SecToken"]["ApprovalBrands"].Split(',');
+                                    //Check whether brand is in approvalbrands
+                                    if (approvalbrands.Any(x => x.Contains(cm.Brand.ToString())))
+                                    {
+                                        <tr>
+                                            <td><a href="@Url.Action("CostingModelReview", null, new { id=cm.ModelID, p="review"}, Request.Url.Scheme)" class="btn btn-block  btn-outline-warning">Review</a></td>
+                                            <td>@cm.Datecreated</td>
+                                            <td>Costing Model</td>
+                                            <td>@cm.Modelname</td>
+                                            <td>Baseline</td>
+                                            <td><span class="text-warning">Approval Requested</span></td>
+                                        </tr>
+                                    }
+
+                                }
+                                //brand managers
+                                else if (Model.role != "exec")
+                                {
+                                    //show draft
+                                    if (cm.Status == 4 && cm.Type == "3")
+                                    {
+                                        <tr>
+                                            <td><a href="@Url.Action("PriceChange", null, new { cmid=cm.ModelID}, Request.Url.Scheme)" class="btn btn-block  btn-outline-success" onclick="loaderFadein()">Continue</a></td>
+                                            <td>@cm.Datecreated</td>
+                                            <td>Costing Model</td>
+                                            <td>@cm.Modelname</td>
+                                            <td>Price Change</td>
+                                            <td><span class="text-success">Approved</span></td>
+                                        </tr>
+                                    }
+                                    if (cm.Status == 1)
+                                    {
+                                        <tr>
+                                            <td><a href="@Url.Action("CostingModel", null, new { id=cm.ModelID}, Request.Url.Scheme)" class="btn btn-block  btn-outline-warning" onclick="loaderFadein()">Continue</a></td>
+                                            <td>@cm.Datecreated</td>
+                                            <td>Costing Model</td>
+                                            <td>@cm.Modelname</td>
+                                            @switch (cm.Type)
+                                            {
+                                                case "1":
+                                                    <td>Baseline</td>;
+                                                    break;
+                                                case "2":
+                                                    <td>Planning</td>;
+                                                    break;
+                                                case "3":
+                                                    <td>Price Change</td>;
+                                                    break;
+                                            }
+                                            <td><span class="text-info">Draft</span></td>
+                                        </tr>
+                                    }
+                                    //show rejected
+                                    if (cm.Status == 3)
+                                    {
+                                        <tr>
+                                            <td><button class="btn btn-block btn-outline-warning btnrejectmodal" data-toggle="modal" data-target="#modalRejectCM" data-id="@cm.ModelID">Review</button></td>
+                                            <td>@cm.Datecreated</td>
+                                            <td>Costing Model</td>
+                                            <td>@cm.Modelname</td>
+                                            @switch (cm.Type)
+                                            {
+                                                case "1":
+                                                    <td>Baseline</td>;
+                                                    break;
+                                                case "2":
+                                                    <td>Planning</td>;
+                                                    break;
+                                                case "3":
+                                                    <td>Price Change</td>;
+                                                    break;
+                                            }
+                                            <td><span class="text-danger">Rejected</span></td>
+                                        </tr>
+                                    }
+                                }
+
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="row px-3">
+                        <div class="alert alert-success col-12">
+                            You have no active tasks
+                        </div>
+                    </div>
+                }
+            </section>
+            @if (Model.role != "exec")
+                                            {
+                <section id="section_dash" class="p-3 bg-white border">
+
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body ">
+                                    <div class="p-3 d-flex align-items-center">
+                                        <i class="fa fa-calculator bg-primary p-3 font-2xl mr-3"></i>
+                                        <div>
+                                            <div class="text-value-sm text-primary">Costing Model</div>
+                                            @*<div class="text-muted text-uppercase font-weight-bold small">Income</div>*@
+                                        </div>
+                                        <a href="@Url.Action("CostingModel", null, new { step = 1, controller = "Home" }, Request.Url.Scheme)" class="btn btn-lg btn-primary ml-auto" onclick="loaderFadein()">Create New</a>
+                                    </div>
+                                    @*<h5 class="text-muted">All Costing Models</h5>*@
+                                    <div class="form-group d-inline-flex mb-0 my-3">
+                                        <button id="btn-programSelectAll" class="btn btn-danger mx-1">Show 'Not Implemented': On</button>
+                                    </div>
+                                    <table class="table table-bordered dataTable" id="dataTable-costing">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>Date Created</th>
+                                                <th>Name</th>
+                                                <th>Costing Model Type</th>
+                                                <th>Brand Manager</th>
+                                                <th>Status</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var cm in Model.allcostingmodel)
+                                            {
+                                                <tr>
+                                                    <td>@cm.Datecreated.ToShortDateString()</td>
+                                                    <td>@cm.Modelname</td>
+                                                    @switch (cm.Type)
+                                                    {
+                                                        case "1":
+                                                            <td>Baseline</td>;
+                                                            break;
+                                                        case "2":
+                                                            <td>Planning</td>;
+                                                            break;
+                                                        case "3":
+                                                            <td>Price Change</td>;
+                                                            break;
+                                                    }
+                                                    <td>@cm.Bdm</td>
+                                                    @switch (cm.Status)
+                                                    {
+                                                        case 0:
+                                                            <td><span class="text-danger">Not Implemented</span></td>
+                                                            break;
+                                                        case 1:
+                                                            <td><span class="text-primary">Draft</span></td>
+                                                            break;
+                                                        case 2:
+                                                            <td><span class="text-warning">Approval Requested</span></td>
+                                                            break;
+                                                        case 3:
+                                                            <td><span class="text-danger">Rejected</span></td>
+                                                            break;
+                                                        case 4:
+                                                            <td><span class="text-success">Approved</span></td>
+                                                            break;
+                                                        case 5:
+                                                            <td><span class="text-success">Implemented</span></td>
+                                                            break;
+                                                        default:
+                                                            break;
+                                                    }
+                                                    @if (cm.Status != 1 && cm.Status != 3)
+                                                    {
+                                                        <td>
+                                                            <a class="btn btn-outline-primary" href="@Url.Action("CostingModelReview", null,new { id=cm.ModelID}, Request.Url.Scheme)">
+                                                                <i class="fa fa-eye"></i>
+                                                            </a>
+                                                            <a class="btn btn-outline-danger disabled" href="@Url.Action("CostingModel", null, new { id=cm.ModelID, p="delete"}, Request.Url.Scheme)">
+                                                                <i class="fa fa-trash"></i>
+                                                            </a>
+                                                        </td>
+                                                    }
+                                                    else
+                                                    {
+                                                        <td>
+                                                            <a class="btn btn-outline-primary" href="@Url.Action("CostingModel", null, new { id=cm.ModelID}, Request.Url.Scheme)">
+                                                                <i class="fa fa-pencil"></i>
+                                                            </a>
+                                                            <btn class="btn btn-outline-danger" data-toggle="modal" data-target="#modalDeleteCM" onclick="deleteCMWarning(@cm.ModelID)">
+                                                                <i class="fa fa-trash"></i>
+                                                            </btn>
+                                                        </td>
+                                                    }
+                                                </tr>
+                                            }
+
+                                        </tbody>
+                                    </table>
+                                </div>
+                                @*<div class="card-footer px-3 py-2">
+                                    <a class="btn-block text-muted d-flex justify-content-between align-items-center" href="#anchor_models">
+                                        <span class="font-weight-bold text-primary">View All Models</span>
+                                        <i class="fa fa-angle-right"></i>
+                                    </a>
+                                </div>*@
+                            </div>
+                        </div>
+                        
+                    </div>
+                </section>
+            }
+
+            <span id="anchor_review" />
+            <span id="anchor_models" />
+
+
+            @*<section id="section_models" class="my-4 p-3 bg-white border">
+                <h5 class="text-muted">All Costing Models</h5>
+                <div class="form-group d-inline-flex mb-0 my-3">
+                    <button id="btn-programSelectAll" class="btn btn-danger mx-1">Show 'Not Implemented': On</button>
+                </div>
+                <table class="table table-bordered dataTable" id="dataTable-costing">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Date Created</th>
+                            <th>Name</th>
+                            <th>Costing Model Type</th>
+                            <th>Brand Manager</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var cm in Model.allcostingmodel)
+                        {
+                        <tr>
+                            <td>@cm.Datecreated.ToShortDateString()</td>
+                            <td>@cm.Modelname</td>
+                            <td>Baseline</td>
+                            <td>@cm.Bdm</td>
+                            @switch (cm.Status)
+                            {
+                                case 0:
+                                    <td><span class="text-danger">Not Implemented</span></td>
+                                    break;
+                                case 1:
+                                    <td><span class="text-primary">Draft</span></td>
+                                    break;
+                                case 2:
+                                    <td><span class="text-warning">Approval Requested</span></td>
+                                    break;
+                                case 3:
+                                    <td><span class="text-danger">Rejected</span></td>
+                                    break;
+                                case 4:
+                                    <td><span class="text-success">Approved</span></td>
+                                    break;
+                                case 5:
+                                    <td><span class="text-success">Implemented</span></td>
+                                    break;
+                                default:
+                                    break;
+                            }
+                            @if (cm.Status != 1 && cm.Status != 4)
+                            {
+                                <td>
+                                    <a class="btn btn-outline-primary" href="@Url.Action("CostingModelReview", null, new { id=cm.ModelID, p="view"}, Request.Url.Scheme)">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
+                                    <a class="btn btn-outline-danger disabled" href="@Url.Action("CostingModel", null, new { id=cm.ModelID, p="delete"}, Request.Url.Scheme)">
+                                        <i class="fa fa-trash"></i>
+                                    </a>
+                                </td>
+                            }
+                            else
+                            {
+                                <td>
+                                    <a class="btn btn-outline-primary" href="@Url.Action("CostingModel", null, new { id=cm.ModelID}, Request.Url.Scheme)">
+                                        <i class="fa fa-pencil"></i>
+                                    </a>
+                                    <btn class="btn btn-outline-danger" data-toggle="modal" data-target="#modalDeleteCM" onclick="deleteCMWarning(@cm.ModelID)">
+                                        <i class="fa fa-trash"></i>
+                                    </btn>
+                                </td>
+                            }
+                        </tr>
+                        }
+
+                    </tbody>
+                </table>
+            </section>*@
+
+            @*<span id="anchor_pricechange" />
+            <section id="step2" class="my-4 p-3 bg-white border">
+                <h5 class="text-muted">All Price Change Proposals</h5>
+                <b class="text-muted">Showing Entries For: <span class="text-primary">Anabela Neves, Anne Mergelas</span></b>
+                <br />
+                <div class="form-group d-inline-flex mb-0 my-3">
+                    <button id="btn-programSelectAll" class="btn btn-success mx-1">Show Implemented: On</button>
+                    <button class="btn btn-primary mx-1" data-toggle="collapse" data-target="#step1">Change Search Settings</button>
+                </div>
+                <section id="step1" class="collapse">
+                    <form class="col-7 mx-auto">
+                        <hr />
+                        <h5 class="text-muted">Search Settings</h5>
+                        <div class="form-group col-12">
+                            <label for="sel1">Brand Manager:</label>
+                            <select class="selectpicker form-control search-result-filter" id="selBrandManager" data-live-search="true" data-style="btn-white border-secondary" multiple>
+                                <option selected>Anabela Neves</option>
+                                <option>Anne Mergelas</option>
+                                <option>Asif Ahmad NT</option>
+                                <option>ASIF AHMAD PT</option>
+                                <option>Barry Sheldrick</option>
+                                <option>Bill Rait</option>
+                                <option>Craig Ambeau</option>
+                                <option>CONNIE VETRO</option>
+                                <option>Darlene Thomas</option>
+                                <option>David Hazzard</option>
+                                <option>Keira Hall</option>
+                            </select>
+                        </div>
+                        <div class="row col-12">
+                            <div class="form-group col-4">
+                                <label for="selPricetype" class="row col-12">Price Type :</label>
+                                <select class="selectpicker form-control search-result-filter" id="selPricetype" data-live-search="true" data-style="btn-white border-secondary">
+                                    <option selected>0 - Retail</option>
+                                    <option>1 -STORE D</option>
+                                    <option>2 -WHOLESALE</option>
+                                    <option>3 -AMAZON</option>
+                                    <option>6 -WAL-MART</option>
+                                    <option>7 -LCL DSD AFFILIATE</option>
+                                    <option>9 -BAY ZELLERS</option>
+                                    <option>B -LOBLAW COMPANIES WHS</option>
+                                    <option>D -SHOPPERS DRUG MART</option>
+                                    <option>E -MCKESSON</option>
+                                    <option>I -METRO INC WHSE</option>
+                                    <option>K -LONGOS</option>
+                                    <option>N -LCL DSD NON AFFILIAT</option>
+                                    <option>P -METRO INC DSD/Z3DELI</option>
+                                    <option>Q -FOOD SERVICE ZONE A</option>
+                                    <option>AL-FCL TGP DSD</option>
+                                    <option>AM-FARMBOY</option>
+                                    <option>AN-SOBEYS NTL DSD CH</option>
+                                    <option>AO-SOBEYS NTL WHS CH</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-4">
+                                <label for="sel1">Status:</label>
+                                <select class="selectpicker form-control" id="selBrandManager" multiple data-style="btn-white border-secondary">
+                                    <option selected>All</option>
+                                    <option>Draft</option>
+                                    <option>Approval Requested</option>
+                                    <option>Approved</option>
+                                    <option>Rejected</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-4">
+                                <label for="txt-PriceType">Item Number:</label>
+                                <input type="text" class="form-control" id="txtPriceType" placeholder="">
+                            </div>
+                        </div>
+                        <div class="row col-12">
+                            <div class="col-6">
+                                <label for="sel1">Filter by P&L:</label>
+                                <select class="selectpicker form-control search-result-filter" id="selunusedpnl" data-live-search="true" data-style="btn-white border-secondary">
+                                    <option>GODIVA - 091619</option>
+                                    <option>KIKKOMAN BRAND - 031619</option>
+                                    <option>KIKKOMAN BRAND - 112618</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label>Show Records from</label>
+                                    <div class="row">
+                                        <input type="date" max="2025-12-31"
+                                               min="1900-01-01" class="form-control col-6">
+                                        <input type="date" min="1900-01-01"
+                                               max="2025-12-31" class="form-control col-6">
+                                    </div>
+                                </div>
+                            </div>
+                            <hr />
+                        </div>
+                        <div class="row mx-auto py-5">
+                            <button id="submitsearch-PCE" type="button" class="btn btn-block btn-lg btn-success">Submit</button>
+                        </div>
+                    </form>
+                </section>
+
+                <hr />
+                <table class="table table-bordered datatable" id="dataTable-PCE">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Implement Date</th>
+                            <th>Name</th>
+                            <th>Zone</th>
+                            <th>Brand Manager</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>09/01/19</td>
+                            <td>KKM - 6% PI - METRO PVA</td>
+                            <td>Z1</td>
+                            <td>Anabela Neves</td>
+                            <td><span class="text-success">Implemented</span></td>
+                            <td>
+                                <a class="btn btn-outline-primary" href="#?">
+                                    <i class="fa fa-eye"></i>
+                                </a>
+                                <a class="btn btn-outline-danger disabled" href="#?">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>11/01/18</td>
+                            <td>CARRS ENTERTAINMENT COLLECT</td>
+                            <td>All</td>
+                            <td>Anabela Neves</td>
+                            <td><span class="text-success">Implemented</span></td>
+                            <td>
+                                <a class="btn btn-outline-primary" href="#?">
+                                    <i class="fa fa-eye"></i>
+                                </a>
+                                <a class="btn btn-outline-danger disabled" href="#?">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <tr class="rowRejected">
+                            <td>11/14/19</td>
+                            <td>GODIVA NEW LISTING</td>
+                            <td>All</td>
+                            <td>Anne Mergelas</td>
+                            <td class="rowStatus"><span class="text-danger">Rejected</span></td>
+                            <td>
+                                <a class="btn btn-outline-primary" href="#?">
+                                    <i class="fa fa-pencil"></i>
+                                </a>
+                                <a class="btn btn-outline-danger" href="#?">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>11/14/19</td>
+                            <td>GODIVA GM VLTN HEART - 14 PC</td>
+                            <td>All</td>
+                            <td>Anabela Neves</td>
+                            <td><span class="text-success">Approved</span></td>
+                            <td>
+                                <a class="btn btn-outline-primary" href="#?">
+                                    <i class="fa fa-eye"></i>
+                                </a>
+                                <a class="btn btn-outline-danger" href="#?">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>11/15/19</td>
+                            <td>GODIVA VLTN HEART - 20 PC</td>
+                            <td>All</td>
+                            <td>Anne Mergelas</td>
+                            <td><span class="text-warning">Approval Requested</span></td>
+                            <td>
+                                <a class="btn btn-outline-primary" href="#?">
+                                    <i class="fa fa-eye"></i>
+                                </a>
+                                <a class="btn btn-outline-danger" href="#?">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>11/15/19</td>
+                            <td>GODIVA VLTN HEART - 28 PC</td>
+                            <td>All</td>
+                            <td>Anne Mergelas</td>
+                            <td><span class="text-success">Approved</span></td>
+                            <td>
+                                <a class="btn btn-outline-primary" href="#?">
+                                    <i class="fa fa-eye"></i>
+                                </a>
+                                <a class="btn btn-outline-danger" href="#?">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>12/24/19</td>
+                            <td>KIKKOMAN BRAND BCH 0000547</td>
+                            <td>All</td>
+                            <td>Anabela Neves</td>
+                            <td><span class="text-success">Approved</span></td>
+                            <td>
+                                <a class="btn btn-outline-primary" href="#?">
+                                    <i class="fa fa-eye"></i>
+                                </a>
+                                <a class="btn btn-outline-danger" href="#?">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>11/24/19</td>
+                            <td>KIKKOMAN BRAND BCH 0000548</td>
+                            <td>All</td>
+                            <td>Anabela Neves</td>
+                            <td><span class="text-info">Draft</span></td>
+                            <td>
+                                <a class="btn btn-outline-primary" href="#?">
+                                    <i class="fa fa-pencil"></i>
+                                </a>
+                                <a class="btn btn-outline-danger" href="#?">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>*@
+            <div class="modal fade" id="modalDeleteCM" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-danger" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">This costing model will be deleted</h4>
+                            <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">×</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Deleting this costing model will also delete all groups and calculations in it.</p>
+                            <p>This action cannot be undone</p>
+                        </div>
+                        <div class="modal-footer">
+                            <a id="btnDeleteCMmodal" class="btn btn-danger" href=""><i class="fa fa-trash pr-2"> </i> <span>Delete Costing Model</span></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="modalRejectCM" tabindex="-1" role="dialog" aria-labelledby="modalRejectCM" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalItemGroup1Label">Costing Model rejected</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="comment">Reason for Rejection:</label>
+                                <textarea class="form-control" rows="5" id="comment-rejectmodal" contenteditable="false">Comment about why the entry is rejected.</textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <a id="url-RejecttoCM" class="btn btn-lg btn-block btn-outline-primary">Go to Costing Model</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="modalRejectPC" tabindex="-1" role="dialog" aria-labelledby="modalReject" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalItemGroup1Label">Price change rejected</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="comment">Reason for Rejection:</label>
+                                <textarea class="form-control" rows="5" id="comment" contenteditable="false">Comment about why the entry is rejected. </textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <a id="url-RejecttoPC" class="btn btn-lg btn-block btn-outline-primary" href="#?">Go to Price Change Proposal</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script src="~/Scripts/Site/formwizard.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#dataTable-PCE').dataTable();
+            $('#dataTable-costing').dataTable();
+            $('#table-tasks').dataTable({
+                "columnDefs": [
+                    { "orderable": false, "targets": 0 }
+                ],
+                "order": [[1, "desc"]]
+            });
+            loaderFadeout();
+            $(".btnrejectmodal").click(function () {
+                var dataid = $(this).data("id");
+                $("#comment-rejectmodal").text(dataid);
+                $("#url-RejecttoCM").attr("href", '/Home/CostingModel/' + dataid);
+            });
+        });</script>
+    <script>
+        function deleteCMWarning(id) {
+            var parenturl = window.location.href.split('/PCMMain')[0];
+            var newurl = parenturl.concat("/CostingModel?p=delete&id=" + id);
+            $("#btnDeleteCMmodal").attr("href", newurl);
+        }
+    </script>
+}
